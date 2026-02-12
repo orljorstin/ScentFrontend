@@ -695,10 +695,10 @@ export default function ScentsmithsApp() {
       const fd = new FormData(e.target);
       const addrData = {
         id: editingAddress === 'new' ? Date.now() : editingAddress.id,
-        type: fd.get('type'),
-        name: fd.get('name'),
-        phone: fd.get('phone'),
-        address: fd.get('address'),
+        type: fd.get('type') as string,
+        name: fd.get('name') as string,
+        phone: fd.get('phone') as string,
+        address: fd.get('address') as string,
         default: fd.get('isDefault') === 'on',
       };
       if (addrData.default) {
@@ -787,10 +787,10 @@ export default function ScentsmithsApp() {
       const fd = new FormData(e.target);
       const newCard = {
         id: Date.now(),
-        type: fd.get('cardType'),
+        type: fd.get('cardType') as string,
         number: `**** **** **** ${fd.get('last4')}`,
-        holder: fd.get('holder').toUpperCase(),
-        expiry: fd.get('expiry'),
+        holder: (fd.get('holder') as string).toUpperCase(),
+        expiry: fd.get('expiry') as string,
       };
       setPayments(prev => [...prev, newCard]);
       setShowCardForm(false);
