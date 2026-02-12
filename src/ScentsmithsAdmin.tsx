@@ -27,9 +27,9 @@ const INITIAL_CUSTOMERS = [
 ];
 
 const MOCK_NOTIFICATIONS = [
-    { id: 1, text: "New order #ORD-2932 placed by John Doe", type: "order", time: "5m ago" },
-    { id: 2, text: "Low stock alert: Tom Ford Black Orchid (5 left)", type: "alert", time: "1h ago" },
-    { id: 3, text: "New customer registered: Emily Clark", type: "user", time: "2h ago" },
+    { id: 1, text: "New order #ORD-2932 placed by John Doe", type: "order", time: "5m ago", read: false },
+    { id: 2, text: "Low stock alert: Tom Ford Black Orchid (5 left)", type: "alert", time: "1h ago", read: false },
+    { id: 3, text: "New customer registered: Emily Clark", type: "user", time: "2h ago", read: false },
 ];
 
 export default function ScentsmithsAdmin() {
@@ -67,10 +67,10 @@ export default function ScentsmithsAdmin() {
         const formData = new FormData(e.target);
         const newProd = {
             id: editingProduct.id || Date.now(),
-            name: formData.get('name'),
-            category: formData.get('category'),
-            price: parseFloat(formData.get('price')),
-            stock: parseInt(formData.get('stock')),
+            name: formData.get('name') as string,
+            category: formData.get('category') as string,
+            price: parseFloat(formData.get('price') as string),
+            stock: parseInt(formData.get('stock') as string),
         };
 
         if (editingProduct === 'new') {
@@ -585,7 +585,7 @@ export default function ScentsmithsAdmin() {
     );
 }
 
-const StatCard = ({ title, value, change, isNegative }) => (
+const StatCard = ({ title, value, change, isNegative = false }) => (
     <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
         <p className="text-gray-500 text-sm mb-2 font-medium">{title}</p>
         <div className="flex justify-between items-end">
