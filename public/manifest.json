@@ -1,21 +1,24 @@
 {
-    "name": "Scentsmiths",
+    "name": "Scentsmiths — Premium Fragrances",
     "short_name": "Scentsmiths",
-    "description": "Premium Fragrance Boutique",
+    "description": "Discover your perfect scent with AI-powered fragrance matching",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#FDFBF4",
     "theme_color": "#961E20",
+    "orientation": "portrait-primary",
     "icons": [
         {
-            "src": "/icon-192.png",
-            "sizes": "192x192",
-            "type": "image/png"
-        },
-        {
-            "src": "/icon-512.png",
+            "src": "/icons/icon-512.svg",
             "sizes": "512x512",
-            "type": "image/png"
+            "type": "image/svg+xml",
+            "purpose": "any"
         }
-    ]
+    ],
+    "categories": [
+        "shopping",
+        "lifestyle"
+    ],
+    "screenshots": [],
+    "prefer_related_applications": false
 }

@@ -2,9 +2,14 @@ import React, { useState, useEffect } from 'react';
 import {
   ShoppingBag, Heart, User, Home, Search, Menu, ArrowLeft, Share2,
   Minus, Plus, Trash2, Check, Truck, CreditCard, MapPin, ChevronRight,
-  Package, X, LogOut, Settings, Bell, Star, Filter, Eye, EyeOff, Edit3
+  Package, X, LogOut, Settings, Bell, Star, Filter, Eye, EyeOff, Edit3, Shield
 } from 'lucide-react';
 import { api, auth } from './api';
+import { useAuth } from './contexts/AuthContext';
+import { useCart } from './contexts/CartContext';
+import { useFavorites } from './contexts/FavoritesContext';
+import AuthRequiredModal from './components/AuthRequiredModal';
+import ToggleSwitch from './components/ToggleSwitch';
 
 // --- MOCK DATA ---
 const INITIAL_PERFUMES = [
@@ -102,13 +107,19 @@ const MOCK_PAYMENTS = [
 ];
 
 export default function ScentsmithsApp() {
-  const [currentView, setCurrentView] = useState('onboarding'); // Initial view
-  const [hasSeenOnboarding, setHasSeenOnboarding] = useState(false);
+  const { user, isAuthenticated, login, register, logout: doLogout } = useAuth();
+  const { cart, cartTotal, cartCount, addToCart, removeFromCart, updateQty, clearCart } = useCart();
+  const { favorites, isFavorite, toggleFavorite: doToggleFavorite } = useFavorites();
 
+  const [currentView, setCurrentView] = useState('onboarding');
+  const [hasSeenOnboarding, setHasSeenOnboarding] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [cart, setCart] = useState([]);
-  const [favorites, setFavorites] = useState([]);
-  const [user, setUser] = useState(null); // Auth state
+
+  // Auth modal for guest-first flow
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authModalAction, setAuthModalAction] = useState<'addToCart' | 'toggleFavorite'>('addToCart');
+  const [pendingProduct, setPendingProduct] = useState<any>(null);
+  const [pendingSize, setPendingSize] = useState(50);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -150,56 +161,58 @@ export default function ScentsmithsApp() {
       .catch(() => { /* keep mock data */ });
   }, []);
 
-  useEffect(() => {
-    // Restore session from saved token
-    const token = auth.getToken();
-    if (token) {
-      api.get('/api/user/me')
-        .then(u => setUser(u))
-        .catch(() => auth.logout());
-    }
-  }, []);
+  // Auth session is now handled by AuthContext
 
   // --- ACTIONS ---
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
   const handleProductClick = (product) => {
     setSelectedProduct(product);
-    setSelectedSize(product.sizes[0]);
+    setSelectedSize(product.sizes?.[0] || '50ml');
     setCurrentView('product-details');
     setIsMenuOpen(false);
   };
 
-  const addToCart = (product, size) => {
-    const existing = cart.find(item => item.id === product.id && item.size === size);
-    if (existing) {
-      setCart(cart.map(item => item.id === product.id && item.size === size ? { ...item, qty: item.qty + 1 } : item));
-    } else {
-      setCart([...cart, { ...product, size, qty: 1 }]);
+  // Guest-gated cart action
+  const handleAddToCart = (product, size) => {
+    if (!isAuthenticated) {
+      setPendingProduct(product);
+      setPendingSize(size);
+      setAuthModalAction('addToCart');
+      setShowAuthModal(true);
+      return;
     }
+    addToCart(product, size);
   };
 
-  const removeFromCart = (id, size) => {
-    setCart(cart.filter(item => !(item.id === id && item.size === size)));
-  };
-
+  // Guest-gated favorite action
   const toggleFavorite = (e, product) => {
     if (e) e.stopPropagation();
-    if (favorites.find(f => f.id === product.id)) {
-      setFavorites(favorites.filter(f => f.id !== product.id));
-    } else {
-      setFavorites([...favorites, product]);
+    if (!isAuthenticated) {
+      setPendingProduct(product);
+      setAuthModalAction('toggleFavorite');
+      setShowAuthModal(true);
+      return;
     }
+    doToggleFavorite(product);
   };
 
-  const updateQty = (id, size, delta) => {
-    setCart(cart.map(item => {
-      if (item.id === id && item.size === size) {
-        return { ...item, qty: Math.max(1, item.qty + delta) };
-      }
-      return item;
-    }));
+  const handleAuthModalLogin = () => {
+    setShowAuthModal(false);
+    setCurrentView('profile'); // goes to login form
   };
+
+  // After login, execute any pending action
+  useEffect(() => {
+    if (isAuthenticated && pendingProduct) {
+      if (authModalAction === 'addToCart') {
+        addToCart(pendingProduct, pendingSize);
+      } else if (authModalAction === 'toggleFavorite') {
+        doToggleFavorite(pendingProduct);
+      }
+      setPendingProduct(null);
+    }
+  }, [isAuthenticated]);
 
   const handleSearch = (e) => {
     setSearchQuery(e.target.value);
@@ -207,40 +220,44 @@ export default function ScentsmithsApp() {
     if (e.target.value.length === 0 && currentView === 'search') setCurrentView('shop');
   };
 
+  const [loginError, setLoginError] = useState('');
+  const [signupError, setSignupError] = useState('');
+  const [signupSuccess, setSignupSuccess] = useState(false);
+
   const handleLogin = async (e) => {
     e.preventDefault();
+    setLoginError('');
     const form = new FormData(e.target);
     try {
-      const { user: u, token } = await auth.login({
-        email: form.get('email') as string || 'nate@example.com',
-        password: form.get('password') as string || 'password',
-      });
-      auth.saveToken(token);
-      setUser(u);
+      await login(
+        form.get('email') as string,
+        form.get('password') as string,
+      );
       setCurrentView('profile');
-    } catch {
-      // Fallback to mock login on API failure
-      setUser({ name: "Nateman", email: "nate@example.com", phone: "+63 9825676767" });
-      setCurrentView('profile');
+    } catch (err: any) {
+      setLoginError(err?.message || 'Login failed. Please try again.');
     }
   };
 
   const handleSignUp = async (e) => {
     e.preventDefault();
+    setSignupError('');
+    setSignupSuccess(false);
     const form = new FormData(e.target);
     try {
-      const { user: u, token } = await auth.register({
-        email: form.get('email') as string || 'new@example.com',
-        password: form.get('password') as string || 'password',
-        name: form.get('name') as string || 'New User',
-      });
-      auth.saveToken(token);
-      setUser(u);
-      setCurrentView('profile');
-    } catch {
-      // Fallback to mock sign-up
-      setUser({ name: "New User", email: "new@example.com", phone: "" });
-      setCurrentView('profile');
+      await register(
+        form.get('email') as string,
+        form.get('password') as string,
+        form.get('name') as string,
+      );
+      setSignupSuccess(true);
+      // Redirect to login after showing success message
+      setTimeout(() => {
+        setSignupSuccess(false);
+        setCurrentView('profile');
+      }, 1500);
+    } catch (err: any) {
+      setSignupError(err?.message || 'Sign up failed. Please check your connection and try again.');
     }
   };
 
@@ -271,7 +288,6 @@ export default function ScentsmithsApp() {
     }
   };
 
-  const cartTotal = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
   const deliveryFee = 5.00;
   const grandTotal = cartTotal + deliveryFee;
 
@@ -295,8 +311,11 @@ export default function ScentsmithsApp() {
               <button onClick={() => { setCurrentView('profile'); toggleMenu(); }} className="text-left flex items-center gap-3"><User size={20} /> Profile</button>
               <button onClick={() => { setCurrentView('settings'); toggleMenu(); }} className="text-left flex items-center gap-3"><Settings size={20} /> Settings</button>
               <div className="h-px bg-gray-200 my-2"></div>
+              {user?.role === 'admin' && (
+                <a href="/admin" className="text-left flex items-center gap-3 text-[#961E20] font-bold"><Shield size={20} /> Admin Panel</a>
+              )}
               {user ? (
-                <button onClick={() => { setUser(null); toggleMenu(); }} className="text-left flex items-center gap-3 text-red-600"><LogOut size={20} /> Log Out</button>
+                <button onClick={() => { doLogout(); toggleMenu(); }} className="text-left flex items-center gap-3 text-red-600"><LogOut size={20} /> Log Out</button>
               ) : (
                 <button onClick={() => { setCurrentView('profile'); toggleMenu(); }} className="text-left flex items-center gap-3 text-[#961E20]">Sign In</button>
               )}
@@ -311,12 +330,8 @@ export default function ScentsmithsApp() {
     <div className="flex flex-col h-full bg-[#FDFBF4] relative overflow-hidden">
       <div className="flex-1 flex flex-col items-center justify-center p-6 text-center z-10 animate-fade-in">
         <div className="mb-4">
-          <div className="w-16 h-16 bg-[#961E20] rounded-lg flex items-center justify-center mx-auto text-white shadow-lg">
-            <span className="font-serif text-3xl italic">S</span>
-          </div>
+          <img src="/logo.png" alt="Scentsmiths" className="h-16 w-auto object-contain" />
         </div>
-        <h1 className="text-[#961E20] text-2xl font-serif tracking-widest font-bold mb-2">SCENTSMITHS</h1>
-        <p className="text-[#961E20] text-xs tracking-[0.3em] mb-8">PERFUME</p>
 
         <div className="relative w-72 h-72 mb-8">
           <div className="absolute inset-0 flex items-center justify-center">
@@ -355,7 +370,7 @@ export default function ScentsmithsApp() {
       >
         <Heart
           size={16}
-          className={favorites.find(f => f.id === product.id) ? "fill-[#961E20] text-[#961E20]" : "text-gray-400"}
+          className={isFavorite(product.id) ? "fill-[#961E20] text-[#961E20]" : "text-gray-400"}
         />
       </button>
 
@@ -364,11 +379,11 @@ export default function ScentsmithsApp() {
         <p className="text-xs text-gray-400">{product.brand} • 50ml</p>
       </div>
       <div className="relative w-full aspect-square mb-3 flex items-center justify-center bg-gray-50 rounded-xl overflow-hidden">
-        <img src={product.image} alt={product.name} className="w-3/4 h-3/4 object-contain group-hover:scale-110 transition-transform duration-300" />
+        <img src={product.image || product.image_url} alt={product.name} className="w-3/4 h-3/4 object-contain group-hover:scale-110 transition-transform duration-300" />
       </div>
       <div className="mt-auto w-full flex justify-between items-end">
-        <div className="text-sm font-semibold text-gray-600">${product.price.toFixed(2)}</div>
-        <button className="bg-[#961E20] text-white p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="text-sm font-semibold text-gray-600">${(product.price_50ml || product.price || 0).toFixed(2)}</div>
+        <button onClick={(e) => { e.stopPropagation(); handleAddToCart(product, 50); }} className="bg-[#961E20] text-white p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
           <Plus size={14} />
         </button>
       </div>
@@ -377,11 +392,36 @@ export default function ScentsmithsApp() {
 
   const ShopView = () => (
     <div className="flex flex-col h-full bg-[#FDFBF4]">
-      {/* Header */}
+      {/* Header — mobile: hamburger/logo/search, desktop: full nav bar */}
       <div className="p-4 flex justify-between items-center sticky top-0 bg-[#FDFBF4]/95 backdrop-blur-sm z-20">
-        <button onClick={toggleMenu}><Menu className="text-[#961E20]" /></button>
-        <div className="w-8 h-8 bg-[#961E20] rounded flex items-center justify-center text-white font-serif italic shadow-md">S</div>
-        <button onClick={() => setCurrentView('search')}><Search className="text-[#961E20]" /></button>
+        {/* Mobile: hamburger */}
+        <button onClick={toggleMenu} className="lg:hidden"><Menu className="text-[#961E20]" /></button>
+
+        {/* Logo */}
+        <div className="flex items-center gap-2">
+          <img src="/logo.png" alt="Scentsmiths" className="h-8 w-auto object-contain" />
+          <span className="hidden lg:block font-serif text-lg font-bold tracking-widest text-[#961E20]">SCENTSMITHS</span>
+        </div>
+
+        {/* Desktop: nav links */}
+        <nav className="hidden lg:flex items-center gap-6 text-sm font-medium text-gray-600">
+          <button onClick={() => setCurrentView('shop')} className="hover:text-[#961E20] transition-colors">Shop</button>
+          <button onClick={() => { setSeeAllCategory('Best Seller'); applyFilter('Best Seller', 'popular'); setCurrentView('see-all'); }} className="hover:text-[#961E20] transition-colors">Best Sellers</button>
+          <button onClick={() => { setSeeAllCategory('Just Arrived'); applyFilter('Just Arrived', 'popular'); setCurrentView('see-all'); }} className="hover:text-[#961E20] transition-colors">New Arrivals</button>
+        </nav>
+
+        {/* Right icons */}
+        <div className="flex items-center gap-3">
+          <button onClick={() => setCurrentView('search')}><Search className="text-[#961E20]" size={20} /></button>
+          <button onClick={() => setCurrentView('favorites')} className="hidden lg:block"><Heart className="text-[#961E20]" size={20} /></button>
+          <button onClick={() => setCurrentView('cart')} className="hidden lg:block relative">
+            <ShoppingBag className="text-[#961E20]" size={20} />
+            {cartCount > 0 && <span className="absolute -top-1 -right-1 bg-[#961E20] text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">{cartCount}</span>}
+          </button>
+          <button onClick={() => setCurrentView('profile')} className="hidden lg:block">
+            <User className="text-[#961E20]" size={20} />
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto pb-24 px-4 scrollbar-hide">
@@ -403,8 +443,8 @@ export default function ScentsmithsApp() {
           </button>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mb-8">
-          {perfumes.filter(p => p.category === "Best Seller").slice(0, 2).map(perfume => (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
+          {perfumes.filter(p => p.category === "Best Seller").slice(0, 4).map(perfume => (
             <ProductCard key={perfume.id} product={perfume} />
           ))}
         </div>
@@ -427,8 +467,8 @@ export default function ScentsmithsApp() {
           </button>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          {perfumes.filter(p => p.category === "Just Arrived").slice(0, 2).map(perfume => (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-4">
+          {perfumes.filter(p => p.category === "Just Arrived").slice(0, 4).map(perfume => (
             <ProductCard key={perfume.id} product={perfume} />
           ))}
         </div>
@@ -463,7 +503,7 @@ export default function ScentsmithsApp() {
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto p-4 pb-24 grid grid-cols-2 gap-4">
+        <div className="flex-1 overflow-y-auto p-4 pb-24 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {filteredPerfumes.map(perfume => (
             <ProductCard key={perfume.id} product={perfume} />
           ))}
@@ -493,7 +533,7 @@ export default function ScentsmithsApp() {
 
       <div className="flex-1 overflow-y-auto p-4 pb-24">
         {searchQuery ? (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {perfumes.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()) || p.brand.toLowerCase().includes(searchQuery.toLowerCase())).map(perfume => (
               <ProductCard key={perfume.id} product={perfume} />
             ))}
@@ -525,7 +565,7 @@ export default function ScentsmithsApp() {
             <button onClick={() => setCurrentView('shop')} className="mt-4 text-[#961E20] font-bold text-sm">Start Browsing</button>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {favorites.map(perfume => (
               <ProductCard key={perfume.id} product={perfume} />
             ))}
@@ -548,20 +588,23 @@ export default function ScentsmithsApp() {
         <form onSubmit={handleSignUp} className="space-y-4">
           <div>
             <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">Full Name</label>
-            <input type="text" required className="w-full border-b border-gray-300 py-2 outline-none focus:border-[#961E20] bg-transparent" placeholder="John Doe" />
+            <input name="name" type="text" required className="w-full border-b border-gray-300 py-2 outline-none focus:border-[#961E20] bg-transparent" placeholder="John Doe" />
           </div>
           <div>
             <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">Email</label>
-            <input type="email" required className="w-full border-b border-gray-300 py-2 outline-none focus:border-[#961E20] bg-transparent" placeholder="name@example.com" />
+            <input name="email" type="email" required className="w-full border-b border-gray-300 py-2 outline-none focus:border-[#961E20] bg-transparent" placeholder="name@example.com" />
           </div>
           <div className="mb-4">
             <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">Password</label>
-            <input type="password" required className="w-full border-b border-gray-300 py-2 outline-none focus:border-[#961E20] bg-transparent" placeholder="••••••••" />
+            <input name="password" type="password" required className="w-full border-b border-gray-300 py-2 outline-none focus:border-[#961E20] bg-transparent" placeholder="••••••••" />
           </div>
           <button type="submit" className="w-full bg-[#961E20] text-white py-4 rounded-xl font-bold shadow-lg mt-8">
             Sign Up
           </button>
         </form>
+        {signupSuccess && <p className="mt-4 text-sm text-green-700 bg-green-50 border border-green-200 rounded-lg p-3 text-center font-medium">Account created! Redirecting to login...</p>}
+        {signupError && <p className="mt-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3 text-center">{signupError}</p>}
+        <p className="text-center mt-4 text-sm text-gray-600">Already have an account? <button onClick={() => setCurrentView('profile')} className="text-[#961E20] font-bold ml-1">Sign In</button></p>
       </div>
     </div>
   );
@@ -584,16 +627,17 @@ export default function ScentsmithsApp() {
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
                 <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">Email</label>
-                <input type="email" className="w-full border-b border-gray-300 py-2 outline-none focus:border-[#961E20] bg-transparent" placeholder="name@example.com" />
+                <input name="email" type="email" className="w-full border-b border-gray-300 py-2 outline-none focus:border-[#961E20] bg-transparent" placeholder="name@example.com" />
               </div>
               <div className="mb-4">
                 <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">Password</label>
-                <input type="password" className="w-full border-b border-gray-300 py-2 outline-none focus:border-[#961E20] bg-transparent" placeholder="••••••••" />
+                <input name="password" type="password" className="w-full border-b border-gray-300 py-2 outline-none focus:border-[#961E20] bg-transparent" placeholder="••••••••" />
               </div>
               <button type="submit" className="w-full bg-[#961E20] text-white py-4 rounded-xl font-bold shadow-lg mt-8">
                 Sign In
               </button>
             </form>
+            {loginError && <p className="mt-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3 text-center">{loginError}</p>}
             <p className="text-center mt-6 text-sm text-gray-600">Don't have an account? <button onClick={() => setCurrentView('signup')} className="text-[#961E20] font-bold ml-1">Sign Up</button></p>
           </div>
           <BottomNav active="profile" />
@@ -665,9 +709,18 @@ export default function ScentsmithsApp() {
             </button>
           </div>
 
+          {user?.role === 'admin' && (
+            <a
+              href="/admin"
+              className="w-full flex items-center justify-center gap-2 mt-4 bg-[#961E20] text-white py-3 rounded-xl font-bold text-sm hover:bg-[#7a181a] transition-colors"
+            >
+              <Shield size={16} /> Admin Dashboard
+            </a>
+          )}
+
           <button
-            onClick={() => setUser(null)}
-            className="w-full text-center mt-6 text-gray-400 text-sm font-medium hover:text-[#961E20]"
+            onClick={() => doLogout()}
+            className="w-full text-center mt-4 text-gray-400 text-sm font-medium hover:text-[#961E20]"
           >
             Log Out
           </button>
@@ -825,21 +878,21 @@ export default function ScentsmithsApp() {
               <form onSubmit={handleAddCard} className="space-y-4">
                 <div>
                   <label className="text-xs font-bold text-gray-500 uppercase">Card Type</label>
-                  <select name="cardType" className="w-full border-b border-gray-300 py-2 outline-none focus:border-[#961E20] bg-transparent text-sm">
+                  <select name="cardType" className="w-full border-b border-gray-300 py-2 outline-none focus:border-[#961E20] bg-transparent text-sm text-gray-900">
                     <option>Visa</option><option>Mastercard</option><option>Amex</option>
                   </select>
                 </div>
                 <div>
                   <label className="text-xs font-bold text-gray-500 uppercase">Cardholder Name</label>
-                  <input name="holder" required className="w-full border-b border-gray-300 py-2 outline-none focus:border-[#961E20] bg-transparent text-sm" placeholder="JOHN DOE" />
+                  <input name="holder" required className="w-full border-b border-gray-300 py-2 outline-none focus:border-[#961E20] bg-transparent text-sm text-gray-900" placeholder="JOHN DOE" />
                 </div>
                 <div>
                   <label className="text-xs font-bold text-gray-500 uppercase">Last 4 Digits</label>
-                  <input name="last4" required maxLength={4} pattern="\d{4}" className="w-full border-b border-gray-300 py-2 outline-none focus:border-[#961E20] bg-transparent text-sm" placeholder="1234" />
+                  <input name="last4" required maxLength={4} pattern="\d{4}" className="w-full border-b border-gray-300 py-2 outline-none focus:border-[#961E20] bg-transparent text-sm text-gray-900" placeholder="1234" />
                 </div>
                 <div>
                   <label className="text-xs font-bold text-gray-500 uppercase">Expiry Date</label>
-                  <input name="expiry" required pattern="\d{2}/\d{2}" className="w-full border-b border-gray-300 py-2 outline-none focus:border-[#961E20] bg-transparent text-sm" placeholder="MM/YY" />
+                  <input name="expiry" required pattern="\d{2}/\d{2}" className="w-full border-b border-gray-300 py-2 outline-none focus:border-[#961E20] bg-transparent text-sm text-gray-900" placeholder="MM/YY" />
                 </div>
                 <button type="submit" className="w-full bg-[#961E20] text-white py-3 rounded-xl font-bold mt-2">Add Card</button>
               </form>
@@ -930,11 +983,11 @@ export default function ScentsmithsApp() {
           <h3 className="text-sm font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2">Preferences</h3>
           <div className="flex justify-between items-center mb-3">
             <span className="text-sm text-gray-700">Order Updates</span>
-            <div className="w-8 h-4 bg-[#961E20] rounded-full relative"><div className="w-3 h-3 bg-white rounded-full absolute top-0.5 right-0.5"></div></div>
+            <ToggleSwitch checked={true} onChange={() => { }} />
           </div>
           <div className="flex justify-between items-center">
             <span className="text-sm text-gray-700">Promotional Emails</span>
-            <div className="w-8 h-4 bg-gray-300 rounded-full relative"><div className="w-3 h-3 bg-white rounded-full absolute top-0.5 left-0.5"></div></div>
+            <ToggleSwitch checked={false} onChange={() => { }} />
           </div>
         </div>
       </div>
@@ -948,7 +1001,7 @@ export default function ScentsmithsApp() {
         <button onClick={goBack} className="bg-white/50 p-2 rounded-full backdrop-blur-sm shadow-sm"><ArrowLeft className="text-[#961E20]" size={20} /></button>
         <div className="flex gap-3">
           <button onClick={(e) => toggleFavorite(e, selectedProduct)} className="bg-white/50 p-2 rounded-full backdrop-blur-sm shadow-sm">
-            <Heart size={20} className={favorites.find(f => f.id === selectedProduct.id) ? "fill-[#961E20] text-[#961E20]" : "text-[#961E20]"} />
+            <Heart size={20} className={isFavorite(selectedProduct?.id) ? "fill-[#961E20] text-[#961E20]" : "text-[#961E20]"} />
           </button>
           <button className="bg-white/50 p-2 rounded-full backdrop-blur-sm shadow-sm"><Share2 className="text-[#961E20]" size={20} /></button>
         </div>
@@ -958,7 +1011,7 @@ export default function ScentsmithsApp() {
         <div className="absolute top-16 right-6 bg-white/30 backdrop-blur-md px-3 py-1.5 rounded-full text-white text-xs border border-white/20 shadow-lg animate-bounce-slow">
           ✨ AI Scent Profile
         </div>
-        <img src={selectedProduct.image} alt={selectedProduct.name} className="w-64 h-64 object-contain drop-shadow-2xl z-10" />
+        <img src={selectedProduct.image || selectedProduct.image_url} alt={selectedProduct.name} className="w-64 h-64 object-contain drop-shadow-2xl z-10" />
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-40 h-4 bg-black/20 blur-xl rounded-full"></div>
       </div>
 
@@ -966,7 +1019,7 @@ export default function ScentsmithsApp() {
         <div className="flex justify-between items-start mb-2">
           <h1 className="text-2xl font-bold text-[#1A1A1A] w-3/4">{selectedProduct.name}</h1>
           <div className="text-right">
-            <p className="text-xl font-bold text-[#961E20]">${selectedProduct.price.toFixed(2)}</p>
+            <p className="text-xl font-bold text-[#961E20]">${(selectedProduct.price_50ml || selectedProduct.price || 0).toFixed(2)}</p>
           </div>
         </div>
 
@@ -1020,13 +1073,13 @@ export default function ScentsmithsApp() {
       </div>
 
       {/* Sticky Bottom Bar */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 flex items-center gap-4 z-30 max-w-md mx-auto">
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 flex items-center gap-4 z-30 max-w-md lg:max-w-7xl mx-auto">
         <button
-          onClick={() => addToCart(selectedProduct, selectedSize)}
+          onClick={() => handleAddToCart(selectedProduct, selectedSize)}
           className="flex-1 bg-[#961E20] text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-[#7a181a] active:scale-95 transition-all flex justify-center items-center gap-2"
         >
           <ShoppingBag size={18} className="text-white/80" />
-          Add to Cart - ${(selectedProduct.price).toFixed(2)}
+          Add to Cart - ${(selectedSize === 100 ? (selectedProduct.price_100ml || selectedProduct.price * 1.6) : (selectedProduct.price_50ml || selectedProduct.price || 0)).toFixed(2)}
         </button>
       </div>
       {/* Spacer for sticky bottom */}
@@ -1107,7 +1160,7 @@ export default function ScentsmithsApp() {
       <BottomNav active="cart" />
 
       {cart.length > 0 && (
-        <div className="fixed bottom-16 left-0 right-0 p-4 pb-8 pointer-events-none z-30 max-w-md mx-auto">
+        <div className="fixed bottom-16 left-0 right-0 p-4 pb-8 pointer-events-none z-30 max-w-md lg:max-w-7xl mx-auto">
           {/* Positioned above BottomNav */}
           <button
             onClick={() => { setCheckoutStep(1); setCurrentView('checkout'); }}
@@ -1275,7 +1328,7 @@ export default function ScentsmithsApp() {
           </div>
         </div>
 
-        <button onClick={() => { setCart([]); setCurrentView('shop'); }} className="w-full bg-[#961E20] text-white py-4 rounded-full font-bold shadow-lg hover:bg-[#7a181a] transition-all">
+        <button onClick={() => { clearCart(); setCurrentView('shop'); }} className="w-full bg-[#961E20] text-white py-4 rounded-full font-bold shadow-lg hover:bg-[#7a181a] transition-all">
           Continue Shopping
         </button>
       </div>
@@ -1379,8 +1432,14 @@ export default function ScentsmithsApp() {
   );
 
   return (
-    <div className="min-h-screen w-full max-w-md mx-auto bg-[#FDFBF4] shadow-2xl relative text-[#1A1A1A] font-sans selection:bg-[#961E20] selection:text-white">
+    <div className="min-h-screen w-full max-w-md lg:max-w-7xl mx-auto bg-[#FDFBF4] shadow-2xl relative text-[#1A1A1A] font-sans selection:bg-[#961E20] selection:text-white">
       <SideMenu />
+      <AuthRequiredModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onGoToLogin={handleAuthModalLogin}
+        actionType={authModalAction}
+      />
       {currentView === 'onboarding' && <OnboardingView />}
       {currentView === 'shop' && <ShopView />}
       {currentView === 'see-all' && <SeeAllView />}
