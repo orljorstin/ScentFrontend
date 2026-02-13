@@ -86,6 +86,15 @@ export default function ProductCard({ product }: ProductCardProps) {
                         src={product.image || product.image_url}
                         alt={product.name}
                         className="w-3/4 h-3/4 object-contain group-hover:scale-110 transition-transform duration-300"
+                        onError={(e) => {
+                            // If main image fails, try Fragella CDN as fallback
+                            const target = e.target as HTMLImageElement;
+                            if (!target.dataset.fallbackAttempted) {
+                                target.dataset.fallbackAttempted = 'true';
+                                const slug = (product.name || '').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                                target.src = `https://cdn.fragella.com/images/${slug}.webp`;
+                            }
+                        }}
                     />
                 </div>
                 <div className="mt-auto w-full flex justify-between items-end">
