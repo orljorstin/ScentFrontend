@@ -186,7 +186,25 @@ export default function ProductPage() {
                     <button onClick={handleFavorite} className="bg-white/50 p-2 rounded-full backdrop-blur-sm shadow-sm">
                         <Heart size={20} className={isFavorite(product.id) ? "fill-[#961E20] text-[#961E20]" : "text-[#961E20]"} />
                     </button>
-                    <button className="bg-white/50 p-2 rounded-full backdrop-blur-sm shadow-sm"><Share2 className="text-[#961E20]" size={20} /></button>
+                    <button onClick={async () => {
+                        const shareData = {
+                            title: product.name,
+                            text: `Check out ${product.name} on Scentsmiths!`,
+                            url: window.location.href,
+                        };
+                        try {
+                            if (navigator.share) {
+                                await navigator.share(shareData);
+                            } else {
+                                await navigator.clipboard.writeText(window.location.href);
+                                addToast('Link copied to clipboard!', 'success');
+                            }
+                        } catch (err) {
+                            console.warn('Share failed:', err);
+                        }
+                    }} className="bg-white/50 p-2 rounded-full backdrop-blur-sm shadow-sm hover:scale-105 active:scale-95 transition-all">
+                        <Share2 className="text-[#961E20]" size={20} />
+                    </button>
                 </div>
             </div>
 

@@ -40,17 +40,72 @@ export default function ScentsmithsAdmin() {
     const [viewingCustomer, setViewingCustomer] = useState<any>(null); // Viewing profile
     const [editingCustomer, setEditingCustomer] = useState<any>(null); // Editing profile
 
-    // --- FETCH DATA ---
+    // --- REAL-TIME POLLING ---
     useEffect(() => {
         if (!isAuthenticated || user?.role !== 'admin') return;
 
-        api.get('/api/products').then(setProducts).catch(() => { });
-        api.get('/api/admin/orders').then(setOrders).catch(() => { }); // This returns orders with users(name, email)
-        api.get('/api/admin/customers').then(setCustomers).catch(() => { });
-        api.get('/api/admin/stats').then(setDashboardStats).catch(() => { });
-        api.get('/api/admin/stats').then(setDashboardStats).catch(() => { });
-        // Fetch real notifications for admin user
-        api.get('/api/user/notifications').then(setAdminNotifications).catch(() => { });
+        let intervalId: any;
+        let previousTotalOrders = 0;
+
+        // Initial fetch
+        const fetchData = async () => {
+            try {
+                const [productsData, ordersData, customersData, statsData] = await Promise.all([
+                    api.get('/api/products'),
+                    api.get('/api/admin/orders'),
+                    api.get('/api/admin/customers'),
+                    api.get('/api/admin/stats')
+                ]);
+
+                setProducts(productsData);
+                setOrders(ordersData);
+                setCustomers(customersData);
+                setDashboardStats(statsData);
+                previousTotalOrders = statsData.totalOrders;
+            } catch (e) { console.error("Admin data fetch failed", e); }
+        };
+
+        fetchData();
+
+        // Poll every 30 seconds
+        intervalId = setInterval(async () => {
+            try {
+                const stats = await api.get('/api/admin/stats');
+
+                // If new orders arrived
+                if (stats.totalOrders > previousTotalOrders) {
+                    const diff = stats.totalOrders - previousTotalOrders;
+                    previousTotalOrders = stats.totalOrders;
+
+                    // 1. Play Sound
+                    const audio = new Audio('/notification.mp3'); // Ensure this file exists in /public or use base64
+                    audio.play().catch(e => console.warn("Audio play failed (user interaction needed first)", e));
+
+                    // 2. Show Toast (using simple alert for now if ToastContext isn't available here, but we should import it)
+                    // Since we are inside ScentsmithsAdmin, let's assume we can use a local state or just refresh data
+                    setDashboardStats(stats);
+
+                    // Refresh orders list silently
+                    const newOrders = await api.get('/api/admin/orders');
+                    setOrders(newOrders);
+
+                    // Add to notifications
+                    setAdminNotifications(prev => [{
+                        id: Date.now(),
+                        title: 'New Order Received',
+                        message: `${diff} new order(s) placed just now.`,
+                        type: 'order',
+                        created_at: new Date().toISOString(),
+                        is_read: false
+                    }, ...prev]);
+
+                    // Update Notification Badge
+                    setShowNotifications(true);
+                }
+            } catch (e) { console.warn("Polling failed", e); }
+        }, 30000);
+
+        return () => clearInterval(intervalId);
     }, [isAuthenticated, user]);
 
     // --- ACTIONS ---
