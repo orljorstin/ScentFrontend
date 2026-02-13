@@ -6,6 +6,7 @@ import { useFavorites } from '../contexts/FavoritesContext';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../api';
 import AuthRequiredModal from '../components/AuthRequiredModal';
+import { useToast } from '../contexts/ToastContext';
 
 // Types for Fragella enrichment data
 interface FragellaNote {
@@ -123,13 +124,18 @@ export default function ProductPage() {
             .finally(() => setLoading(false));
     }, [id]);
 
+    const { addToast } = useToast(); // Added hook
+
     const handleAddToCart = () => {
         if (!isAuthenticated) {
             setAuthAction('addToCart');
             setShowAuthModal(true);
             return;
         }
-        if (product) addToCart(product, selectedSize);
+        if (product) {
+            addToCart(product, selectedSize);
+            addToast(`Added ${product.name} to cart`, 'success');
+        }
     };
 
     const handleFavorite = () => {
@@ -138,7 +144,11 @@ export default function ProductPage() {
             setShowAuthModal(true);
             return;
         }
-        if (product) toggleFavorite(product);
+        if (product) {
+            toggleFavorite(product);
+            const isFav = isFavorite(product.id);
+            addToast(isFav ? "Removed from favorites" : "Saved to favorites", 'info');
+        }
     };
 
     const handleLoginRedirect = () => {

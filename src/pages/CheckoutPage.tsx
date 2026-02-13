@@ -4,11 +4,13 @@ import { ArrowLeft, Check, Truck, CreditCard, Plus } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../api';
+import { useToast } from '../contexts/ToastContext';
 
 export default function CheckoutPage() {
     const navigate = useNavigate();
     const { cart, cartTotal, clearCart } = useCart();
     const { user } = useAuth();
+    const { addToast } = useToast();
 
     const [step, setStep] = useState(1); // 1: Shipping, 2: Payment, 3: Success
     const [loading, setLoading] = useState(false);
@@ -17,6 +19,34 @@ export default function CheckoutPage() {
 
     const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
     const [selectedPaymentId, setSelectedPaymentId] = useState<any>(null); // 'cod' or ID
+
+    // Inline Address Form State
+    const [showAddressForm, setShowAddressForm] = useState(false);
+    const [formData, setFormData] = useState({ label: 'Home', name: '', phone: '', address: '', is_default: false });
+
+    const handleSaveAddress = async () => {
+        // Validation
+        const phoneRegex = /^09\d{9}$/;
+        if (!formData.name || !formData.address || !formData.label || !formData.phone) {
+            return addToast("Please fill in all fields", 'error');
+        }
+        if (!phoneRegex.test(formData.phone)) {
+            return addToast("Invalid phone format (09xxxxxxxxx)", 'error');
+        }
+
+        try {
+            const newAddr = await api.post('/api/addresses', formData);
+            // Refresh list and select new address
+            const updated = await api.get('/api/addresses');
+            setAddresses(updated);
+            setSelectedAddressId(newAddr.id || updated[updated.length - 1].id); // Auto-select
+            setShowAddressForm(false);
+            setFormData({ label: 'Home', name: '', phone: '', address: '', is_default: false }); // Reset
+            addToast("Address saved!", 'success');
+        } catch (e: any) {
+            addToast("Failed to save address", 'error');
+        }
+    };
 
     const deliveryFee = 5.00;
     const total = cartTotal + deliveryFee;
@@ -67,8 +97,10 @@ export default function CheckoutPage() {
             await clearCart();
             // Go to success
             setStep(3);
+            addToast('Order placed successfully!', 'success');
         } catch (e: any) {
-            alert(e.message || "Failed to place order");
+            // alert(e.message || "Failed to place order"); // Replaced alert
+            addToast(e.message || "Failed to place order", 'error');
         } finally {
             setLoading(false);
         }
@@ -121,9 +153,33 @@ export default function CheckoutPage() {
                         <div className="bg-white p-4 rounded-xl shadow-sm">
                             <div className="flex justify-between items-center mb-4">
                                 <h3 className="font-bold flex items-center gap-2"><Truck size={18} /> Shipping Address</h3>
-                                <button onClick={() => navigate('/shipping-addresses')} className="text-[#961E20] text-xs font-bold flex items-center gap-1"><Plus size={12} /> Add New</button>
+                                {/* Toggle inline form instead of navigating */}
+                                {!showAddressForm && (
+                                    <button onClick={() => setShowAddressForm(true)} className="text-[#961E20] text-xs font-bold flex items-center gap-1"><Plus size={12} /> Add New</button>
+                                )}
                             </div>
-                            {addresses.length === 0 ? (
+
+                            {/* Inline Address Form */}
+                            {showAddressForm && (
+                                <div className="mb-6 p-4 border border-[#961E20]/20 rounded-xl bg-red-50/10 animate-fade-in">
+                                    <h4 className="font-bold text-sm mb-3">New Address Details</h4>
+                                    <div className="space-y-3">
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <input placeholder="Label (e.g. Home)" value={formData.label} onChange={e => setFormData({ ...formData, label: e.target.value })} className="border p-2 rounded text-sm w-full" />
+                                            <input placeholder="Phone (09xxxxxxxxx)" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="border p-2 rounded text-sm w-full" />
+                                        </div>
+                                        <input placeholder="Full Name" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="border p-2 rounded text-sm w-full" />
+                                        <input placeholder="Full Address (Street, Brgy, City, Province)" value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} className="border p-2 rounded text-sm w-full" />
+
+                                        <div className="flex gap-2 pt-2">
+                                            <button onClick={handleSaveAddress} className="flex-1 bg-[#961E20] text-white py-2 rounded-lg text-sm font-bold">Save & Select</button>
+                                            <button onClick={() => setShowAddressForm(false)} className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-600">Cancel</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {addresses.length === 0 && !showAddressForm ? (
                                 <p className="text-sm text-gray-500 text-center py-4">No addresses found. Please add one.</p>
                             ) : (
                                 <div className="space-y-3">
@@ -140,7 +196,7 @@ export default function CheckoutPage() {
                                 </div>
                             )}
                         </div>
-                        <button onClick={() => { if (addresses.length === 0) return alert('Add an address first'); setStep(2); }} className="w-full bg-[#1A1A1A] text-white py-4 rounded-xl font-bold shadow-lg">
+                        <button onClick={() => { if (!selectedAddressId) return addToast('Please select an address', 'error'); setStep(2); }} className="w-full bg-[#1A1A1A] text-white py-4 rounded-xl font-bold shadow-lg">
                             Continue to Payment
                         </button>
                     </div>
