@@ -162,6 +162,15 @@ export default function ProductPage() {
         });
     };
 
+    const scrollToNotes = () => {
+        const element = document.getElementById('scent-profile');
+        if (element) {
+            // Offset for sticky header if needed, but 'start' usually fine
+            // block: 'center' might be better to show context
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    };
+
     if (loading) return <div className="p-10 text-center">Loading...</div>;
     if (!product) return <div className="p-10 text-center">Product not found</div>;
 
@@ -216,9 +225,12 @@ export default function ProductPage() {
                         {fragella.OilType}
                     </div>
                 )}
-                <div className="absolute top-16 right-6 bg-white/30 backdrop-blur-md px-3 py-1.5 rounded-full text-white text-xs border border-white/20 shadow-lg animate-bounce-slow">
-                    ✨ AI Scent Profile
-                </div>
+                <button
+                    onClick={scrollToNotes}
+                    className="absolute top-16 right-6 bg-white/30 backdrop-blur-md px-3 py-1.5 rounded-full text-white text-xs border border-white/20 shadow-lg animate-bounce-slow cursor-pointer hover:bg-white/50 transition-colors"
+                >
+                    ✨ Scent Profile
+                </button>
                 <img src={productImage} alt={product.name} className="w-64 h-64 object-contain drop-shadow-2xl z-10" />
             </div>
 
@@ -280,7 +292,7 @@ export default function ProductPage() {
                 )}
 
                 {/* Olfactory Notes — Fragella detailed or Supabase fallback */}
-                <div className="mb-8 bg-white p-5 rounded-2xl shadow-sm border border-rose-100 relative overflow-hidden">
+                <div id="scent-profile" className="mb-8 bg-white p-5 rounded-2xl shadow-sm border border-rose-100 relative overflow-hidden">
                     <h3 className="text-[#961E20] font-bold text-xs uppercase tracking-wider mb-4 flex items-center gap-2">
                         <div className="w-1.5 h-1.5 bg-[#961E20] rounded-full"></div>
                         Olfactory Notes
@@ -456,10 +468,10 @@ export default function ProductPage() {
                 <div className="h-20"></div>
             </div>
 
-            <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 flex items-center gap-4 z-50 mx-auto w-full lg:max-w-7xl pb-safe">
+            <div className="fixed bottom-6 left-4 right-4 z-50 flex justify-center pb-safe pointer-events-none">
                 <button
                     onClick={handleAddToCart}
-                    className="flex-1 bg-[#961E20] text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-[#7a181a] active:scale-95 transition-all flex justify-center items-center gap-2"
+                    className="w-full max-w-md bg-[#961E20] text-white py-4 rounded-2xl font-bold shadow-2xl hover:bg-[#7a181a] active:scale-95 transition-all flex justify-center items-center gap-2 pointer-events-auto"
                 >
                     <ShoppingBag size={18} className="text-white/80" />
                     Add to Cart - {formatPrice(currentPrice)}

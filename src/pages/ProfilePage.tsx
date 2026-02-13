@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Settings, Package, MapPin, CreditCard, Bell, ChevronRight, Shield, ArrowLeft, Download } from 'lucide-react';
 import BottomNav from '../components/layout/BottomNav';
 import { usePWAInstall } from '../hooks/usePWAInstall';
+import LoginPage from './LoginPage';
 
 export default function ProfilePage() {
     const navigate = useNavigate();
@@ -14,7 +15,7 @@ export default function ProfilePage() {
     if (!user) {
         // Redirect or show login
         // Ideally this component isn't rendered if not auth
-        return <div className="p-10 text-center"><button onClick={() => navigate('/login')} className="text-[#961E20] font-bold">Please Log In</button></div>;
+        return <LoginPage isEmbedded={true} />;
     }
 
     return (

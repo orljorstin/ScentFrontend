@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { ArrowLeft } from 'lucide-react';
 import BottomNav from '../components/layout/BottomNav';
 
-export default function LoginPage() {
+export default function LoginPage({ isEmbedded = false }: { isEmbedded?: boolean }) {
     const navigate = useNavigate();
     const { login } = useAuth();
     const [error, setError] = useState('');
@@ -14,17 +14,22 @@ export default function LoginPage() {
         const fd = new FormData(e.target as HTMLFormElement);
         try {
             await login(fd.get('email') as string, fd.get('password') as string);
-            navigate('/profile'); // or back to previous
+            // If embedded, we don't need to navigate, state change will reveal Profile
+            if (!isEmbedded) {
+                navigate('/profile');
+            }
         } catch (err: any) {
             setError(err.message);
         }
     };
 
     return (
-        <div className="flex flex-col h-full bg-[#FDFBF4] min-h-screen">
-            <div className="p-4">
-                <button onClick={() => navigate('/')}><ArrowLeft className="text-[#1A1A1A]" /></button>
-            </div>
+        <div className={`flex flex-col h-full bg-[#FDFBF4] ${isEmbedded ? '' : 'min-h-screen'}`}>
+            {!isEmbedded && (
+                <div className="p-4">
+                    <button onClick={() => navigate('/')}><ArrowLeft className="text-[#1A1A1A]" /></button>
+                </div>
+            )}
             <div className="flex-1 flex flex-col p-8 justify-center">
                 <div className="flex justify-center mb-6">
                     <img src="/logo.png" alt="Scentsmiths" className="w-24 h-auto" />
@@ -51,7 +56,7 @@ export default function LoginPage() {
                 {error && <p className="mt-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-3 text-center">{error}</p>}
                 <p className="text-center mt-6 text-sm text-gray-600">Don't have an account? <button onClick={() => navigate('/signup')} className="text-[#961E20] font-bold ml-1">Sign Up</button></p>
             </div>
-            <BottomNav />
+            {!isEmbedded && <BottomNav />}
         </div>
     );
 }
