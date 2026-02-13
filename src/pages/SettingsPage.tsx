@@ -8,7 +8,14 @@ import { api } from '../api';
 
 export default function SettingsPage() {
     const navigate = useNavigate();
-    const { user, login } = useAuth(); // login used here to refresh user state if needed, or we rely on AuthContext reloading
+    const { user, isLoading } = useAuth();
+
+    // Redirect to profile (login) if not authenticated
+    useEffect(() => {
+        if (!isLoading && !user) {
+            navigate('/profile', { replace: true });
+        }
+    }, [user, isLoading, navigate]);
 
     const [name, setName] = useState(user?.name || "");
     const [phone, setPhone] = useState(user?.phone || "");

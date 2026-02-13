@@ -6,8 +6,15 @@ import BottomNav from '../components/layout/BottomNav';
 
 export default function SignupPage() {
     const navigate = useNavigate();
-    const { register } = useAuth();
+    const { register, user } = useAuth(); // Added user
     const [error, setError] = useState('');
+
+    // Redirect if already logged in
+    React.useEffect(() => {
+        if (user) {
+            navigate('/profile', { replace: true });
+        }
+    }, [user, navigate]);
 
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();

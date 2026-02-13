@@ -6,8 +6,15 @@ import BottomNav from '../components/layout/BottomNav';
 
 export default function LoginPage({ isEmbedded = false }: { isEmbedded?: boolean }) {
     const navigate = useNavigate();
-    const { login } = useAuth();
+    const { login, user } = useAuth(); // Added user
     const [error, setError] = useState('');
+
+    // Redirect if already logged in and not embedded
+    React.useEffect(() => {
+        if (user && !isEmbedded) {
+            navigate('/profile', { replace: true });
+        }
+    }, [user, isEmbedded, navigate]);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();

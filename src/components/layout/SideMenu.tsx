@@ -39,7 +39,9 @@ export default function SideMenu({ isOpen, onClose }: SideMenuProps) {
                     <button onClick={() => handleNav('/shop')} className="text-left flex items-center gap-3"><ShoppingBag size={20} /> Shop</button>
                     <button onClick={() => handleNav('/favorites')} className="text-left flex items-center gap-3"><Heart size={20} /> Favorites</button>
                     <button onClick={() => handleNav('/profile')} className="text-left flex items-center gap-3"><User size={20} /> Profile</button>
-                    <button onClick={() => handleNav('/settings')} className="text-left flex items-center gap-3"><Settings size={20} /> Settings</button>
+                    {user && (
+                        <button onClick={() => handleNav('/settings')} className="text-left flex items-center gap-3"><Settings size={20} /> Settings</button>
+                    )}
                     <div className="h-px bg-gray-200 my-2"></div>
                     {user?.role === 'admin' && (
                         <a href="/admin" className="text-left flex items-center gap-3 text-[#961E20] font-bold"><Shield size={20} /> Admin Panel</a>
