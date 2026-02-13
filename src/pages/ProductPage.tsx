@@ -7,6 +7,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { api } from '../api';
 import AuthRequiredModal from '../components/AuthRequiredModal';
 import { useToast } from '../contexts/ToastContext';
+import { useCurrency } from '../hooks/useCurrency';
 
 // Types for Fragella enrichment data
 interface FragellaNote {
@@ -67,6 +68,7 @@ export default function ProductPage() {
     const { addToCart } = useCart();
     const { isFavorite, toggleFavorite } = useFavorites();
     const { isAuthenticated } = useAuth();
+    const { formatPrice } = useCurrency();
 
     const [product, setProduct] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -225,7 +227,7 @@ export default function ProductPage() {
                     <h1 className="text-2xl font-bold text-[#1A1A1A] w-3/4">{product.name}</h1>
                     <div className="text-right">
                         <p className="text-xl font-bold text-[#961E20]">
-                            ${currentPrice.toFixed(2)}
+                            {formatPrice(currentPrice)}
                         </p>
                     </div>
                 </div>
@@ -454,13 +456,13 @@ export default function ProductPage() {
                 <div className="h-20"></div>
             </div>
 
-            <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 flex items-center gap-4 z-30 max-w-md lg:max-w-7xl mx-auto">
+            <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 flex items-center gap-4 z-50 mx-auto w-full lg:max-w-7xl pb-safe">
                 <button
                     onClick={handleAddToCart}
                     className="flex-1 bg-[#961E20] text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-[#7a181a] active:scale-95 transition-all flex justify-center items-center gap-2"
                 >
                     <ShoppingBag size={18} className="text-white/80" />
-                    Add to Cart - ${currentPrice.toFixed(2)}
+                    Add to Cart - {formatPrice(currentPrice)}
                 </button>
             </div>
 

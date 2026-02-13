@@ -8,7 +8,13 @@ export default function PaymentMethodsPage() {
     const [methods, setMethods] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
-    const [formData, setFormData] = useState({ type: 'Visa', last4: '', expiry: '', is_default: false });
+
+    // Detailed Form State
+    const [cardNumber, setCardNumber] = useState('');
+    const [expiry, setExpiry] = useState('');
+    const [cvv, setCvv] = useState('');
+    const [cardType, setCardType] = useState('Unknown');
+    const [isDefault, setIsDefault] = useState(false);
 
     useEffect(() => {
         fetchMethods();
@@ -31,24 +37,74 @@ export default function PaymentMethodsPage() {
         }
     };
 
+    // --- Validation & Formatting Logic ---
+
+    const detectCardType = (num: string) => {
+        const clean = num.replace(/\D/g, '');
+        if (/^4/.test(clean)) return 'Visa';
+        if (/^5[1-5]/.test(clean) || /^2[2-7]/.test(clean)) return 'MasterCard';
+        if (/^3[47]/.test(clean)) return 'Amex';
+        return 'Unknown';
+    };
+
+    const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        let val = e.target.value.replace(/\D/g, '');
+        if (val.length > 16) val = val.substring(0, 16);
+
+        // Format with spaces: 1234 5678 1234 5678
+        const formatted = val.match(/.{1,4}/g)?.join(' ') || val;
+        setCardNumber(formatted);
+        setCardType(detectCardType(val));
+    };
+
     const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        let val = e.target.value.replace(/\D/g, ''); // Remove non-digits
+        let val = e.target.value.replace(/\D/g, '');
         if (val.length >= 3) {
             val = val.substring(0, 2) + '/' + val.substring(2, 4);
         }
-        setFormData({ ...formData, expiry: val });
+        setExpiry(val);
+    };
+
+    const luhnCheck = (num: string) => {
+        let arr = (num + '')
+            .split('')
+            .reverse()
+            .map(x => parseInt(x));
+        let lastDigit = arr.splice(0, 1)[0];
+        let sum = arr.reduce((acc, val, i) => (i % 2 !== 0 ? acc + val : acc + ((val * 2) % 9) || 9), 0);
+        sum += lastDigit;
+        return sum % 10 === 0;
     };
 
     const validateForm = () => {
-        if (formData.last4.length !== 4 || isNaN(Number(formData.last4))) {
-            alert("Please enter exactly 4 digits for Last 4.");
+        const cleanNum = cardNumber.replace(/\D/g, '');
+        if (cleanNum.length < 13 || !luhnCheck(cleanNum)) {
+            alert("Invalid Card Number.");
             return false;
         }
+
         const expiryRegex = /^(0[1-9]|1[0-2])\/([0-9]{2})$/;
-        if (!expiryRegex.test(formData.expiry)) {
+        if (!expiryRegex.test(expiry)) {
             alert("Invalid expiry format. Use MM/YY.");
             return false;
         }
+
+        // Expiry Date Check
+        const [month, year] = expiry.split('/').map(Number);
+        const now = new Date();
+        const currentYear = Number(now.getFullYear().toString().substr(-2));
+        const currentMonth = now.getMonth() + 1;
+
+        if (year < currentYear || (year === currentYear && month < currentMonth)) {
+            alert("Card has expired.");
+            return false;
+        }
+
+        if (cvv.length < 3) {
+            alert("Invalid CVV.");
+            return false;
+        }
+
         return true;
     };
 
@@ -56,10 +112,25 @@ export default function PaymentMethodsPage() {
         e.preventDefault();
         if (!validateForm()) return;
 
+        const cleanNum = cardNumber.replace(/\D/g, '');
+        const last4 = cleanNum.slice(-4);
+
+        const payload = {
+            type: cardType === 'Unknown' ? 'Visa' : cardType, // Default to Visa if unknown but valid
+            last4: last4,
+            expiry: expiry,
+            is_default: isDefault
+        };
+
         try {
-            await api.post('/api/payment-methods', formData);
+            await api.post('/api/payment-methods', payload);
             setShowForm(false);
-            setFormData({ type: 'Visa', last4: '', expiry: '', is_default: false });
+            // Reset
+            setCardNumber('');
+            setExpiry('');
+            setCvv('');
+            setCardType('Unknown');
+            setIsDefault(false);
             fetchMethods();
         } catch (err: any) {
             alert('Failed to add payment method: ' + (err.message || 'Unknown error'));
@@ -83,15 +154,48 @@ export default function PaymentMethodsPage() {
                             <button onClick={() => setShowForm(false)}><X size={16} /></button>
                         </div>
                         <form onSubmit={handleSubmit} className="space-y-3">
-                            <select value={formData.type} onChange={e => setFormData({ ...formData, type: e.target.value })} className="w-full border-b border-gray-200 py-2 outline-none text-sm bg-transparent">
-                                <option value="Visa">Visa</option>
-                                <option value="MasterCard">MasterCard</option>
-                                <option value="Amex">Amex</option>
-                            </select>
-                            <input required maxLength={4} placeholder="Last 4 Digits" value={formData.last4} onChange={e => setFormData({ ...formData, last4: e.target.value })} className="w-full border-b border-gray-200 py-2 outline-none text-sm text-gray-900 placeholder-gray-400" />
-                            <input required maxLength={5} placeholder="Expiry (MM/YY)" value={formData.expiry} onChange={handleExpiryChange} className="w-full border-b border-gray-200 py-2 outline-none text-sm text-gray-900 placeholder-gray-400" />
+                            {/* Card Number & Type Icon */}
+                            <div className="relative">
+                                <input
+                                    required
+                                    maxLength={19} // 16 digits + 3 spaces
+                                    placeholder="Card Number"
+                                    value={cardNumber}
+                                    onChange={handleCardNumberChange}
+                                    className="w-full border-b border-gray-200 py-2 outline-none text-sm text-gray-900 placeholder-gray-400 pl-8"
+                                />
+                                <div className="absolute left-0 top-2 text-gray-400">
+                                    <CreditCard size={18} />
+                                </div>
+                                {cardNumber && (
+                                    <div className="absolute right-0 top-2 text-xs font-bold text-[#961E20]">
+                                        {cardType}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <input
+                                    required
+                                    maxLength={5}
+                                    placeholder="Expiry (MM/YY)"
+                                    value={expiry}
+                                    onChange={handleExpiryChange}
+                                    className="w-full border-b border-gray-200 py-2 outline-none text-sm text-gray-900 placeholder-gray-400"
+                                />
+                                <input
+                                    required
+                                    maxLength={4}
+                                    type="password"
+                                    placeholder="CVV"
+                                    value={cvv}
+                                    onChange={e => setCvv(e.target.value.replace(/\D/g, ''))}
+                                    className="w-full border-b border-gray-200 py-2 outline-none text-sm text-gray-900 placeholder-gray-400"
+                                />
+                            </div>
+
                             <label className="flex items-center gap-2 text-sm text-gray-600">
-                                <input type="checkbox" checked={formData.is_default} onChange={e => setFormData({ ...formData, is_default: e.target.checked })} />
+                                <input type="checkbox" checked={isDefault} onChange={e => setIsDefault(e.target.checked)} />
                                 Set as default
                             </label>
                             <button type="submit" className="w-full bg-[#961E20] text-white py-3 rounded-xl font-bold text-sm mt-2">Save Card</button>

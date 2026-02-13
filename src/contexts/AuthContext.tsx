@@ -22,7 +22,7 @@ interface AuthContextType {
     pendingAction: PendingAction | null;
     returnPath: string | null;
     login: (email: string, password: string) => Promise<void>;
-    register: (email: string, password: string, name: string) => Promise<void>;
+    register: (email: string, password: string, name: string, phone?: string) => Promise<void>;
     logout: () => void;
     setPendingAction: (action: PendingAction | null) => void;
     setReturnPath: (path: string | null) => void;
@@ -54,8 +54,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(u);
     };
 
-    const register = async (email: string, password: string, name: string) => {
-        const { user: u, token } = await authHelpers.register({ email, password, name });
+    const register = async (email: string, password: string, name: string, phone?: string) => {
+        const { user: u, token } = await authHelpers.register({ email, password, name, phone });
         authHelpers.saveToken(token);
         setUser(u);
     };

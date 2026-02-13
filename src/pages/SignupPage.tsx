@@ -13,7 +13,12 @@ export default function SignupPage() {
         e.preventDefault();
         const fd = new FormData(e.target as HTMLFormElement);
         try {
-            await register(fd.get('name') as string, fd.get('email') as string, fd.get('password') as string);
+            await register(
+                fd.get('email') as string,
+                fd.get('password') as string,
+                fd.get('name') as string,
+                fd.get('phone') as string
+            );
             navigate('/profile');
         } catch (err: any) {
             setError(err.message);
@@ -37,6 +42,10 @@ export default function SignupPage() {
                     <div>
                         <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">Email</label>
                         <input name="email" type="email" className="w-full border-b border-gray-300 py-2 outline-none focus:border-[#961E20] bg-transparent" placeholder="name@example.com" />
+                    </div>
+                    <div>
+                        <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">Phone Number</label>
+                        <input name="phone" type="tel" className="w-full border-b border-gray-300 py-2 outline-none focus:border-[#961E20] bg-transparent" placeholder="09xxxxxxxxx" />
                     </div>
                     <div>
                         <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">Password</label>

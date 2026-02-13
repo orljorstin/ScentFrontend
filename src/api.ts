@@ -32,7 +32,7 @@ export const api = {
 
 // Auth helpers
 export const auth = {
-    register: (data: { email: string; password: string; name: string }) =>
+    register: (data: { email: string; password: string; name: string; phone?: string }) =>
         api.post('/auth/register', data),
     login: (data: { email: string; password: string }) =>
         api.post('/auth/login', data),
