@@ -24,14 +24,14 @@ export default function Header({ onMenuClick, searchTerm, onSearchChange }: Head
             </button>
 
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-2 group">
+            <Link to="/shop" className="flex items-center gap-2 group">
                 <img src="/logo.png" alt="Scentsmiths" className="h-8 w-auto object-contain group-hover:scale-105 transition-transform" />
                 <span className="hidden lg:block font-serif text-lg font-bold tracking-widest text-[#961E20]">SCENTSMITHS</span>
             </Link>
 
             {/* Desktop: nav links */}
             <nav className="hidden lg:flex items-center gap-8 text-sm font-medium text-gray-600 ml-8">
-                <Link to="/" className="hover:text-[#961E20] transition-colors relative after:content-[''] after:absolute after:w-full after:scale-x-0 after:h-0.5 after:bottom-[-4px] after:left-0 after:bg-[#961E20] after:origin-bottom-right after:transition-transform hover:after:scale-x-100 hover:after:origin-bottom-left">Shop</Link>
+                <Link to="/shop" className="hover:text-[#961E20] transition-colors relative after:content-[''] after:absolute after:w-full after:scale-x-0 after:h-0.5 after:bottom-[-4px] after:left-0 after:bg-[#961E20] after:origin-bottom-right after:transition-transform hover:after:scale-x-100 hover:after:origin-bottom-left">Shop</Link>
                 <Link to="/favorites" className="hover:text-[#961E20] transition-colors">Favorites</Link>
                 {user && <Link to="/orders" className="hover:text-[#961E20] transition-colors">Orders</Link>}
                 <Link to="/profile" className="hover:text-[#961E20] transition-colors">Profile</Link>

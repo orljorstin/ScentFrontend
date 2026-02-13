@@ -66,7 +66,7 @@ export default function CartPage() {
                             </div>
                         </div>
 
-                        <button className="w-full bg-[#1A1A1A] text-white py-4 rounded-xl font-bold shadow-lg mt-6">
+                        <button onClick={() => navigate('/checkout')} className="w-full bg-[#1A1A1A] text-white py-4 rounded-xl font-bold shadow-lg mt-6">
                             Proceed to Checkout
                         </button>
                     </div>

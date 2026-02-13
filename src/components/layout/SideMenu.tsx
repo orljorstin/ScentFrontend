@@ -35,7 +35,7 @@ export default function SideMenu({ isOpen, onClose }: SideMenuProps) {
                 </div>
 
                 <nav className="flex flex-col gap-6 text-[#1A1A1A] font-medium">
-                    <button onClick={() => handleNav('/')} className="text-left flex items-center gap-3"><Home size={20} /> Home</button>
+                    <button onClick={() => handleNav('/shop')} className="text-left flex items-center gap-3"><Home size={20} /> Home</button>
                     <button onClick={() => handleNav('/shop')} className="text-left flex items-center gap-3"><ShoppingBag size={20} /> Shop</button>
                     <button onClick={() => handleNav('/favorites')} className="text-left flex items-center gap-3"><Heart size={20} /> Favorites</button>
                     <button onClick={() => handleNav('/profile')} className="text-left flex items-center gap-3"><User size={20} /> Profile</button>

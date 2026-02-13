@@ -12,7 +12,7 @@ export default function BottomNav() {
 
     return (
         <div className="fixed bottom-0 left-0 right-0 bg-[#FDFBF4]/95 backdrop-blur-md border-t border-gray-100 p-4 pb-8 flex justify-around items-center text-gray-400 z-40 max-w-md lg:hidden mx-auto">
-            <NavLink to="/" className={navClass} end>
+            <NavLink to="/shop" className={navClass} end>
                 {({ isActive }) => <Home className={isActive ? "fill-current" : ""} />}
             </NavLink>
 

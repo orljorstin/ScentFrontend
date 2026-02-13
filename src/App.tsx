@@ -6,6 +6,7 @@ import { FavoritesProvider } from './contexts/FavoritesContext';
 import { api } from './api';
 
 // Pages
+import OnboardingPage from './pages/OnboardingPage';
 import HomePage from './pages/HomePage';
 import ProductPage from './pages/ProductPage';
 import CartPage from './pages/CartPage';
@@ -15,23 +16,16 @@ import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import SettingsPage from './pages/SettingsPage';
 import OrdersPage from './pages/OrdersPage';
+import OrderDetailsPage from './pages/OrderDetailsPage';
+import CheckoutPage from './pages/CheckoutPage';
+import NotificationsPage from './pages/NotificationsPage';
+import AddressPage from './pages/AddressPage';
+import PaymentMethodsPage from './pages/PaymentMethodsPage';
 import ScentsmithsAdmin from './ScentsmithsAdmin';
 
 export default function App() {
     const [perfumes, setPerfumes] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-
-    // Initial Data / Mock Data Fallback
-    const INITIAL_PERFUMES = [
-        {
-            id: 1, name: "BVLGARI Rose Goldea", brand: "Bvlgari", price: 229.00, rating: 4.5, reviews: 85,
-            image: "https://images.unsplash.com/photo-1594035910387-fea4779426e9?auto=format&fit=crop&q=80&w=600",
-            description: "With its exclusive olfactory notes...",
-            notes: { top: "Pomegranate, Rose", middle: "Damascus Rose, Jasmine", base: "Musk, Sandalwood" },
-            sizes: [50, 100], category: "Best Seller"
-        },
-        // ... minimal fallback to prevent total blank screen if API fails completely
-    ];
 
     useEffect(() => {
         // Fetch products
@@ -39,22 +33,34 @@ export default function App() {
             .then(data => {
                 if (data && data.length) {
                     // Normalize DB data to match UI expectations
-                    const normalized = data.map((p: any) => ({
-                        ...p,
-                        sizes: p.sizes || (p.size_ml ? [p.size_ml] : [50]),
-                        notes: p.notes || {
-                            top: p.notes_top || 'Various',
-                            middle: p.notes_middle || 'Various',
-                            base: p.notes_base || 'Various'
-                        },
-                        price: Number(p.price || p.price_50ml || 0)
-                    }));
+                    const normalized = data.map((p: any) => {
+                        // Determine sizes based on price columns availability
+                        const has50 = p.price_50ml && Number(p.price_50ml) > 0;
+                        const has100 = p.price_100ml && Number(p.price_100ml) > 0;
+                        let sizes: number[] = [];
+                        if (has50) sizes.push(50);
+                        if (has100) sizes.push(100);
+                        if (sizes.length === 0) sizes.push(p.size_ml || 50);
+
+                        return {
+                            ...p,
+                            sizes: sizes,
+                            notes: p.notes || {
+                                top: p.notes_top || 'Various',
+                                middle: p.notes_middle || 'Various',
+                                base: p.notes_base || 'Various'
+                            },
+                            // Default display price (prefer 50ml, then generic price)
+                            price: has50 ? Number(p.price_50ml) : Number(p.price || 0),
+                            // Ensure backend columns are accessible as camelCase if needed, but we used p.price_50ml
+                        };
+                    });
                     setPerfumes(normalized);
                 } else {
-                    setPerfumes(INITIAL_PERFUMES);
+                    setPerfumes([]); // No mock data, clean slate
                 }
             })
-            .catch(() => setPerfumes(INITIAL_PERFUMES))
+            .catch(() => setPerfumes([]))
             .finally(() => setIsLoading(false));
     }, []);
 
@@ -68,10 +74,12 @@ export default function App() {
                             <Route path="/admin/*" element={<ScentsmithsAdmin />} />
 
                             {/* Consumer App Routes */}
-                            <Route path="/" element={<HomePage perfumes={perfumes} isLoading={isLoading} />} />
+                            <Route path="/" element={<OnboardingPage />} />
                             <Route path="/shop" element={<HomePage perfumes={perfumes} isLoading={isLoading} />} />
+
                             <Route path="/product/:id" element={<ProductPage />} />
                             <Route path="/cart" element={<CartPage />} />
+                            <Route path="/checkout" element={<CheckoutPage />} />
                             <Route path="/favorites" element={<FavoritesPage />} />
 
                             <Route path="/profile" element={<ProfilePage />} />
@@ -80,6 +88,10 @@ export default function App() {
 
                             <Route path="/settings" element={<SettingsPage />} />
                             <Route path="/orders" element={<OrdersPage />} />
+                            <Route path="/orders/:id" element={<OrderDetailsPage />} />
+                            <Route path="/notifications" element={<NotificationsPage />} />
+                            <Route path="/shipping-addresses" element={<AddressPage />} />
+                            <Route path="/payment-methods" element={<PaymentMethodsPage />} />
 
                             {/* Catch all */}
                             <Route path="*" element={<Navigate to="/" replace />} />

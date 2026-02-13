@@ -53,14 +53,14 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="bg-white rounded-2xl p-2 shadow-sm space-y-1">
-                    <button className="w-full flex items-center justify-between p-3 hover:bg-gray-50 rounded-xl transition-colors">
+                    <button onClick={() => navigate('/shipping-addresses')} className="w-full flex items-center justify-between p-3 hover:bg-gray-50 rounded-xl transition-colors">
                         <div className="flex items-center gap-3">
                             <MapPin size={18} className="text-gray-500" />
                             <span className="text-sm font-medium">Shipping Addresses</span>
                         </div>
                         <ChevronRight size={16} className="text-gray-400" />
                     </button>
-                    <button className="w-full flex items-center justify-between p-3 hover:bg-gray-50 rounded-xl transition-colors">
+                    <button onClick={() => navigate('/payment-methods')} className="w-full flex items-center justify-between p-3 hover:bg-gray-50 rounded-xl transition-colors">
                         <div className="flex items-center gap-3">
                             <CreditCard size={18} className="text-gray-500" />
                             <span className="text-sm font-medium">Payment Methods</span>
