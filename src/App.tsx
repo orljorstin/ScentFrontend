@@ -77,43 +77,43 @@ export default function App() {
                 <CartProvider>
                     {/* <FavoritesProvider> */}
                     <FavoritesProvider>
-                        {/* <ToastProvider> */}
-                        <CurrencyProvider>
-                            <Routes>
-                                {/* Admin Routes */}
-                                <Route path="/admin/*" element={<ScentsmithsAdmin />} />
+                        <ToastProvider>
+                            <CurrencyProvider>
+                                <Routes>
+                                    {/* Admin Routes */}
+                                    <Route path="/admin/*" element={<ScentsmithsAdmin />} />
 
-                                {/* Consumer App Routes */}
-                                <Route path="/" element={<OnboardingPage />} />
+                                    {/* Consumer App Routes */}
+                                    <Route path="/" element={<OnboardingPage />} />
 
-                                {/* Routes with MainLayout (Header + BottomNav) */}
-                                <Route element={<MainLayout />}>
-                                    <Route path="/shop" element={<HomePage perfumes={perfumes} isLoading={isLoading} />} />
-                                    <Route path="/collections/:id" element={<CollectionPage perfumes={perfumes} />} />
-                                    <Route path="/product/:id" element={<ProductPage />} />
-                                    <Route path="/cart" element={<CartPage />} />
-                                    <Route path="/favorites" element={<FavoritesPage />} />
-                                    <Route path="/profile" element={<ProfilePage />} />
-                                    <Route path="/settings" element={<SettingsPage />} />
-                                    <Route path="/orders" element={<OrdersPage />} />
-                                    <Route path="/orders/:id" element={<OrderDetailsPage />} />
-                                    <Route path="/notifications" element={<NotificationsPage />} />
-                                    <Route path="/shipping-addresses" element={<AddressPage />} />
-                                    <Route path="/payment-methods" element={<PaymentMethodsPage />} />
-                                </Route>
+                                    {/* Routes with MainLayout (Header + BottomNav) */}
+                                    <Route element={<MainLayout />}>
+                                        <Route path="/shop" element={<HomePage perfumes={perfumes} isLoading={isLoading} />} />
+                                        <Route path="/collections/:id" element={<CollectionPage perfumes={perfumes} />} />
+                                        <Route path="/product/:id" element={<ProductPage />} />
+                                        <Route path="/cart" element={<CartPage />} />
+                                        <Route path="/favorites" element={<FavoritesPage />} />
+                                        <Route path="/profile" element={<ProfilePage />} />
+                                        <Route path="/settings" element={<SettingsPage />} />
+                                        <Route path="/orders" element={<OrdersPage />} />
+                                        <Route path="/orders/:id" element={<OrderDetailsPage />} />
+                                        <Route path="/notifications" element={<NotificationsPage />} />
+                                        <Route path="/shipping-addresses" element={<AddressPage />} />
+                                        <Route path="/payment-methods" element={<PaymentMethodsPage />} />
+                                    </Route>
 
-                                <Route path="/checkout" element={<CheckoutPage />} />
-                                <Route path="/login" element={<LoginPage />} />
-                                <Route path="/signup" element={<SignupPage />} />
-                                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-                                <Route path="/reset-password" element={<ResetPasswordPage />} />
+                                    <Route path="/checkout" element={<CheckoutPage />} />
+                                    <Route path="/login" element={<LoginPage />} />
+                                    <Route path="/signup" element={<SignupPage />} />
+                                    <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                                    <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-                                {/* Catch all */}
-                                <Route path="*" element={<Navigate to="/" replace />} />
-                            </Routes>
-                            {/* <ToastContainer /> */}
-                        </CurrencyProvider>
-                        {/* </ToastProvider> */}
+                                    {/* Catch all */}
+                                    <Route path="*" element={<Navigate to="/" replace />} />
+                                </Routes>
+                                <ToastContainer />
+                            </CurrencyProvider>
+                        </ToastProvider>
                     </FavoritesProvider>
                 </CartProvider>
             </AuthProvider>
