@@ -227,3 +227,21 @@ The Vite dev server proxies `/api` and `/auth` requests to `localhost:5000`, so 
 | Frontend shows mock data | Verify `VITE_API_URL` is set correctly in Vercel env vars (no trailing slash) |
 | `/admin` returns 404 on Vercel | Make sure `vercel.json` is in the repo root — it handles SPA routing |
 | Render free tier sleeps | First request after 15min of inactivity takes ~30s to wake up — this is normal |
+
+---
+
+## 🌐 Changing Your Domain
+
+If you want to use a custom domain (e.g., `www.myscentstore.com`) instead of `vercel.app`:
+
+1.  **Vercel (Frontend)**:
+    -   Go to Settings → Domains and add your custom domain.
+    -   Vercel will give you DNS records to add to your domain registrar.
+
+2.  **Supabase (Auth)**:
+    -   Go to **Authentication → URL Configuration**.
+    -   Update **Site URL** to your new domain (e.g., `https://www.myscentstore.com`).
+    -   *Why?* This ensures "Forgot Password" and email confirmation links point to your custom domain, not the old Vercel one.
+
+3.  **Render (Backend)**:
+    -   **No changes needed.** The backend is configured to accept requests from any domain.

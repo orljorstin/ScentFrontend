@@ -157,7 +157,25 @@ export default function ScentsmithsApp() {
   useEffect(() => {
     // Try to load products from API; fall back to mock data on failure
     api.get('/api/products')
-      .then(data => { if (data && data.length) setPerfumes(data); })
+      .then(data => {
+        if (data && data.length) {
+          // Normalize DB data to match UI expectations
+          const normalized = data.map(p => ({
+            ...p,
+            // Ensure sizes array exists (DB has size_ml)
+            sizes: p.sizes || (p.size_ml ? [p.size_ml] : [50]),
+            // Ensure notes object exists (DB has notes_top etc)
+            notes: p.notes || {
+              top: p.notes_top || 'Various',
+              middle: p.notes_middle || 'Various',
+              base: p.notes_base || 'Various'
+            },
+            // Ensure price exists
+            price: Number(p.price || p.price_50ml || 0)
+          }));
+          setPerfumes(normalized);
+        }
+      })
       .catch(() => { /* keep mock data */ });
   }, []);
 
