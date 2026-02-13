@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import BottomNav from '../components/layout/BottomNav';
 
 export default function SignupPage() {
     const navigate = useNavigate();
     const { register, user } = useAuth(); // Added user
     const [error, setError] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
 
     // Redirect if already logged in
     React.useEffect(() => {
@@ -56,7 +57,21 @@ export default function SignupPage() {
                     </div>
                     <div>
                         <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">Password</label>
-                        <input name="password" type="password" className="w-full border-b border-gray-300 py-2 outline-none focus:border-[#961E20] bg-transparent" placeholder="••••••••" />
+                        <div className="relative">
+                            <input
+                                name="password"
+                                type={showPassword ? "text" : "password"}
+                                className="w-full border-b border-gray-300 py-2 outline-none focus:border-[#961E20] bg-transparent pr-10"
+                                placeholder="••••••••"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-0 top-2 text-gray-400 hover:text-gray-600"
+                            >
+                                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                            </button>
+                        </div>
                     </div>
                     <button type="submit" className="w-full bg-[#961E20] text-white py-4 rounded-xl font-bold shadow-lg mt-8">
                         Sign Up

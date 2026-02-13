@@ -143,6 +143,7 @@ export default function ScentsmithsApp() {
   const [checkoutStep, setCheckoutStep] = useState(1);
   const [selectedSize, setSelectedSize] = useState(50);
   const [selectedDelivery, setSelectedDelivery] = useState('standard');
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     // If user has seen onboarding in this session, default to shop
@@ -614,7 +615,22 @@ export default function ScentsmithsApp() {
           </div>
           <div className="mb-4">
             <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">Password</label>
-            <input name="password" type="password" required className="w-full border-b border-gray-300 py-2 outline-none focus:border-[#961E20] bg-transparent" placeholder="••••••••" />
+            <div className="relative">
+              <input
+                name="password"
+                type={showPassword ? "text" : "password"}
+                required
+                className="w-full border-b border-gray-300 py-2 outline-none focus:border-[#961E20] bg-transparent pr-10"
+                placeholder="••••••••"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-0 top-2 text-gray-400 hover:text-gray-600"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
           </div>
           <button type="submit" className="w-full bg-[#961E20] text-white py-4 rounded-xl font-bold shadow-lg mt-8">
             Sign Up
@@ -649,7 +665,21 @@ export default function ScentsmithsApp() {
               </div>
               <div className="mb-4">
                 <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">Password</label>
-                <input name="password" type="password" className="w-full border-b border-gray-300 py-2 outline-none focus:border-[#961E20] bg-transparent" placeholder="••••••••" />
+                <div className="relative">
+                  <input
+                    name="password"
+                    type={showPassword ? "text" : "password"}
+                    className="w-full border-b border-gray-300 py-2 outline-none focus:border-[#961E20] bg-transparent pr-10"
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-0 top-2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
               </div>
               <button type="submit" className="w-full bg-[#961E20] text-white py-4 rounded-xl font-bold shadow-lg mt-8">
                 Sign In
