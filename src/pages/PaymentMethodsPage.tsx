@@ -61,8 +61,9 @@ export default function PaymentMethodsPage() {
             setShowForm(false);
             setFormData({ type: 'Visa', last4: '', expiry: '', is_default: false });
             fetchMethods();
-        } catch (err) {
-            alert('Failed to add payment method');
+        } catch (err: any) {
+            alert('Failed to add payment method: ' + (err.message || 'Unknown error'));
+            console.error(err);
         }
     };
 

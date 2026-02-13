@@ -19,7 +19,10 @@ export default function ProfilePage() {
         <div className="flex flex-col h-full bg-[#FDFBF4] min-h-screen pb-20">
             <div className="p-6 bg-[#961E20] text-white pt-10 pb-16 rounded-b-[2.5rem] shadow-xl relative z-10">
                 <div className="flex justify-between items-start mb-6">
-                    <h1 className="text-2xl font-bold">My Profile</h1>
+                    <div className="flex items-center gap-4">
+                        <button onClick={() => navigate(-1)} className="text-white hover:text-white/80"><ArrowLeft size={24} /></button>
+                        <h1 className="text-2xl font-bold">My Profile</h1>
+                    </div>
                     <button onClick={() => navigate('/settings')}><Settings size={20} /></button>
                 </div>
                 <div className="flex items-center gap-4">
