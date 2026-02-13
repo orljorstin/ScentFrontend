@@ -4,6 +4,7 @@ import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useFavorites } from '../contexts/FavoritesContext';
 import ProductCard from '../components/ProductCard';
+import Header from '../components/layout/Header';
 import BottomNav from '../components/layout/BottomNav';
 import SideMenu from '../components/layout/SideMenu';
 
@@ -37,31 +38,11 @@ export default function HomePage({ perfumes, isLoading }: HomePageProps) {
     return (
         <div className="flex flex-col h-full bg-[#FDFBF4] min-h-screen pb-20">
             {/* Header */}
-            <div className="p-4 flex justify-between items-center sticky top-0 bg-[#FDFBF4]/95 backdrop-blur-sm z-20">
-                <button onClick={() => setIsMenuOpen(true)} className="lg:hidden"><Menu className="text-[#961E20]" /></button>
-
-                <div className="flex items-center gap-2">
-                    <img src="/logo.png" alt="Scentsmiths" className="h-8 w-auto object-contain" />
-                    <span className="hidden lg:block font-serif text-lg font-bold tracking-widest text-[#961E20]">SCENTSMITHS</span>
-                </div>
-
-                {/* Desktop Nav */}
-                <nav className="hidden lg:flex items-center gap-6 text-sm font-medium text-gray-600">
-                    {/* Simple nav for now */}
-                </nav>
-
-                {/* Search Bar - simplified */}
-                <div className="relative w-full max-w-xs ml-4 hidden md:block">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                    <input
-                        type="text"
-                        placeholder="Search perfumes..."
-                        className="w-full bg-white rounded-full py-2 pl-10 pr-4 text-sm focus:outline-none border border-transparent focus:border-[#961E20]"
-                        value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
-                    />
-                </div>
-            </div>
+            <Header
+                onMenuClick={() => setIsMenuOpen(true)}
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
+            />
 
             {/* Mobile Search */}
             <div className="px-4 mb-6 md:hidden">
