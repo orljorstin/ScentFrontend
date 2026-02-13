@@ -1,12 +1,11 @@
+```javascript
 import React, { useState } from 'react';
-import { Menu, Search, X } from 'lucide-react';
+import { Search } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useFavorites } from '../contexts/FavoritesContext';
 import ProductCard from '../components/ProductCard';
-import Header from '../components/layout/Header';
-import BottomNav from '../components/layout/BottomNav';
-import SideMenu from '../components/layout/SideMenu';
 
 // Mock data or pass as prop? Ideally fetch from Context or API hook.
 // For refactor, we should move the API fetching to a hook or keep it in the page.
@@ -21,16 +20,16 @@ interface HomePageProps {
 }
 
 export default function HomePage({ perfumes, isLoading }: HomePageProps) {
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+    const navigate = useNavigate();
 
     // Filter logic
     const isDefaultView = !searchTerm && !selectedCategory;
 
     // Derived lists (mock logic for now, or use real data if available)
     // In a real app, these would be API queries or properties like `is_bestseller`
-    const bestSellers = perfumes.slice(0, 4);
+    const bestSellers = perfumes.slice(0, 4); 
     const newArrivals = perfumes.slice(4, 8);
 
     const filteredPerfumes = perfumes.filter(p => {
@@ -43,19 +42,10 @@ export default function HomePage({ perfumes, isLoading }: HomePageProps) {
     const categories = ['Citrus', 'Floral', 'Woody', 'Oriental', 'Fresh']; // Updated to real categories
 
     return (
-        <div className="flex flex-col h-full bg-[#FDFBF4] min-h-screen pb-20">
-            {/* Header - Sticky */}
-            <div className="sticky top-0 z-50 w-full">
-                <Header
-                    onMenuClick={() => setIsMenuOpen(true)}
-                    searchTerm={searchTerm}
-                    onSearchChange={setSearchTerm}
-                />
-            </div>
-
-            {/* Mobile Search */}
-            <div className="px-4 mb-6 md:hidden mt-4">
-                <div className="relative">
+        <div className="flex flex-col h-full bg-[#FDFBF4] pb-20">
+            {/* Search Bar - Visible in Page Body since Header is in Layout */}
+            <div className="px-4 mb-6 mt-4">
+                <div className="relative max-w-md mx-auto">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                     <input
                         type="text"
@@ -68,10 +58,10 @@ export default function HomePage({ perfumes, isLoading }: HomePageProps) {
             </div>
 
             {/* Categories */}
-            <div className="px-4 mb-8 overflow-x-auto flex gap-2 no-scrollbar">
+            <div className="px-4 mb-8 overflow-x-auto flex gap-2 no-scrollbar justify-start md:justify-center">
                 <button
                     onClick={() => setSelectedCategory(null)}
-                    className={`whitespace-nowrap px-6 py-2 rounded-full text-sm font-medium transition-all ${!selectedCategory ? 'bg-[#961E20] text-white shadow-lg' : 'bg-white text-gray-600 border border-gray-100'}`}
+                    className={`whitespace - nowrap px - 6 py - 2 rounded - full text - sm font - medium transition - all ${ !selectedCategory ? 'bg-[#961E20] text-white shadow-lg' : 'bg-white text-gray-600 border border-gray-100' } `}
                 >
                     All
                 </button>
@@ -79,7 +69,7 @@ export default function HomePage({ perfumes, isLoading }: HomePageProps) {
                     <button
                         key={cat}
                         onClick={() => setSelectedCategory(cat === selectedCategory ? null : cat)}
-                        className={`whitespace-nowrap px-6 py-2 rounded-full text-sm font-medium transition-all ${selectedCategory === cat ? 'bg-[#961E20] text-white shadow-lg' : 'bg-white text-gray-600 border border-gray-100'}`}
+                        className={`whitespace - nowrap px - 6 py - 2 rounded - full text - sm font - medium transition - all ${ selectedCategory === cat ? 'bg-[#961E20] text-white shadow-lg' : 'bg-white text-gray-600 border border-gray-100' } `}
                     >
                         {cat}
                     </button>
@@ -87,7 +77,7 @@ export default function HomePage({ perfumes, isLoading }: HomePageProps) {
             </div>
 
             {/* Main Content */}
-            <div className="px-4 space-y-8">
+            <div className="px-4 space-y-8 max-w-7xl mx-auto w-full">
                 {isLoading ? (
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {[...Array(6)].map((_, i) => (
@@ -100,7 +90,7 @@ export default function HomePage({ perfumes, isLoading }: HomePageProps) {
                         <section>
                             <div className="flex justify-between items-center mb-4">
                                 <h2 className="text-xl font-bold text-[#1A1A1A]">Best Sellers</h2>
-                                <button onClick={() => setSelectedCategory(null)} className="text-[#961E20] text-xs font-bold">View All</button>
+                                <button onClick={() => navigate('/collections/best-sellers')} className="text-[#961E20] text-xs font-bold">View All</button>
                             </div>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 {bestSellers.map(product => (
@@ -113,6 +103,7 @@ export default function HomePage({ perfumes, isLoading }: HomePageProps) {
                         <section>
                             <div className="flex justify-between items-center mb-4">
                                 <h2 className="text-xl font-bold text-[#1A1A1A]">New Fragrances</h2>
+                                <button onClick={() => navigate('/collections/new-fragrances')} className="text-[#961E20] text-xs font-bold">View All</button>
                             </div>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 {newArrivals.map(product => (
@@ -136,9 +127,7 @@ export default function HomePage({ perfumes, isLoading }: HomePageProps) {
                     </div>
                 )}
             </div>
-
-            <BottomNav />
-            <SideMenu isOpen={isMenuOpen} onClose={() => setIsMenuOpen(false)} />
         </div>
     );
 }
+```
