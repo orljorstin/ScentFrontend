@@ -1,12 +1,14 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Settings, Package, MapPin, CreditCard, Bell, ChevronRight, Shield, ArrowLeft } from 'lucide-react';
+import { Settings, Package, MapPin, CreditCard, Bell, ChevronRight, Shield, ArrowLeft, Download } from 'lucide-react';
 import BottomNav from '../components/layout/BottomNav';
+import { usePWAInstall } from '../hooks/usePWAInstall';
 
 export default function ProfilePage() {
     const navigate = useNavigate();
     const { user, logout } = useAuth();
+    const { isInstallable, install } = usePWAInstall();
 
     // If used without RequireAuth wrapper, handle null user
     if (!user) {
@@ -54,6 +56,24 @@ export default function ProfilePage() {
                         <ChevronRight size={16} className="text-gray-400" />
                     </div>
                 </div>
+
+                {isInstallable && (
+                    <div className="bg-white rounded-2xl p-4 shadow-sm mb-4 border border-rose-100">
+                        <div className="flex justify-between items-center mb-2">
+                            <h3 className="font-bold text-[#1A1A1A]">App Installation</h3>
+                        </div>
+                        <button
+                            onClick={install}
+                            className="w-full flex items-center gap-3 p-3 rounded-xl bg-rose-50 hover:bg-rose-100 transition-colors text-left text-rose-700 font-medium"
+                        >
+                            <Download size={20} />
+                            <div>
+                                <p>Install Scentsmiths</p>
+                                <p className="text-xs text-rose-500 font-normal">Add to Home Screen</p>
+                            </div>
+                        </button>
+                    </div>
+                )}
 
                 <div className="bg-white rounded-2xl p-2 shadow-sm space-y-1">
                     <button onClick={() => navigate('/shipping-addresses')} className="w-full flex items-center justify-between p-3 hover:bg-gray-50 rounded-xl transition-colors">
