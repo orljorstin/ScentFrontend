@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Settings, Package, MapPin, CreditCard, Bell, ChevronRight, Shield } from 'lucide-react';
+import { Settings, Package, MapPin, CreditCard, Bell, ChevronRight, Shield, ArrowLeft } from 'lucide-react';
 import BottomNav from '../components/layout/BottomNav';
 
 export default function ProfilePage() {
