@@ -1,4 +1,4 @@
-```javascript
+
 import React, { useState } from 'react';
 import { Search } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -29,7 +29,7 @@ export default function HomePage({ perfumes, isLoading }: HomePageProps) {
 
     // Derived lists (mock logic for now, or use real data if available)
     // In a real app, these would be API queries or properties like `is_bestseller`
-    const bestSellers = perfumes.slice(0, 4); 
+    const bestSellers = perfumes.slice(0, 4);
     const newArrivals = perfumes.slice(4, 8);
 
     const filteredPerfumes = perfumes.filter(p => {
@@ -61,7 +61,7 @@ export default function HomePage({ perfumes, isLoading }: HomePageProps) {
             <div className="px-4 mb-8 overflow-x-auto flex gap-2 no-scrollbar justify-start md:justify-center">
                 <button
                     onClick={() => setSelectedCategory(null)}
-                    className={`whitespace - nowrap px - 6 py - 2 rounded - full text - sm font - medium transition - all ${ !selectedCategory ? 'bg-[#961E20] text-white shadow-lg' : 'bg-white text-gray-600 border border-gray-100' } `}
+                    className={`whitespace-nowrap px-6 py-2 rounded-full text-sm font-medium transition-all ${!selectedCategory ? 'bg-[#961E20] text-white shadow-lg' : 'bg-white text-gray-600 border border-gray-100'}`}
                 >
                     All
                 </button>
@@ -69,7 +69,7 @@ export default function HomePage({ perfumes, isLoading }: HomePageProps) {
                     <button
                         key={cat}
                         onClick={() => setSelectedCategory(cat === selectedCategory ? null : cat)}
-                        className={`whitespace - nowrap px - 6 py - 2 rounded - full text - sm font - medium transition - all ${ selectedCategory === cat ? 'bg-[#961E20] text-white shadow-lg' : 'bg-white text-gray-600 border border-gray-100' } `}
+                        className={`whitespace-nowrap px-6 py-2 rounded-full text-sm font-medium transition-all ${selectedCategory === cat ? 'bg-[#961E20] text-white shadow-lg' : 'bg-white text-gray-600 border border-gray-100'}`}
                     >
                         {cat}
                     </button>
@@ -130,4 +130,4 @@ export default function HomePage({ perfumes, isLoading }: HomePageProps) {
         </div>
     );
 }
-```
+
