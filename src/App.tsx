@@ -3,7 +3,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { FavoritesProvider } from './contexts/FavoritesContext';
-import { ToastProvider } from './contexts/ToastContext'; // Added
+import { ToastProvider } from './contexts/ToastContext';
+import { CurrencyProvider } from './contexts/CurrencyContext';
 import { api } from './api';
 import MainLayout from './components/layout/MainLayout';
 import ToastContainer from './components/ToastContainer'; // Added
@@ -76,39 +77,41 @@ export default function App() {
                 <CartProvider>
                     <FavoritesProvider>
                         <ToastProvider> {/* Added */}
-                            <Routes>
-                                {/* Admin Routes */}
-                                <Route path="/admin/*" element={<ScentsmithsAdmin />} />
+                            <CurrencyProvider> {/* Added */}
+                                <Routes>
+                                    {/* Admin Routes */}
+                                    <Route path="/admin/*" element={<ScentsmithsAdmin />} />
 
-                                {/* Consumer App Routes */}
-                                <Route path="/" element={<OnboardingPage />} />
+                                    {/* Consumer App Routes */}
+                                    <Route path="/" element={<OnboardingPage />} />
 
-                                {/* Routes with MainLayout (Header + BottomNav) */}
-                                <Route element={<MainLayout />}>
-                                    <Route path="/shop" element={<HomePage perfumes={perfumes} isLoading={isLoading} />} />
-                                    <Route path="/collections/:id" element={<CollectionPage perfumes={perfumes} />} />
-                                    <Route path="/product/:id" element={<ProductPage />} />
-                                    <Route path="/cart" element={<CartPage />} />
-                                    <Route path="/favorites" element={<FavoritesPage />} />
-                                    <Route path="/profile" element={<ProfilePage />} />
-                                    <Route path="/settings" element={<SettingsPage />} />
-                                    <Route path="/orders" element={<OrdersPage />} />
-                                    <Route path="/orders/:id" element={<OrderDetailsPage />} />
-                                    <Route path="/notifications" element={<NotificationsPage />} />
-                                    <Route path="/shipping-addresses" element={<AddressPage />} />
-                                    <Route path="/payment-methods" element={<PaymentMethodsPage />} />
-                                </Route>
+                                    {/* Routes with MainLayout (Header + BottomNav) */}
+                                    <Route element={<MainLayout />}>
+                                        <Route path="/shop" element={<HomePage perfumes={perfumes} isLoading={isLoading} />} />
+                                        <Route path="/collections/:id" element={<CollectionPage perfumes={perfumes} />} />
+                                        <Route path="/product/:id" element={<ProductPage />} />
+                                        <Route path="/cart" element={<CartPage />} />
+                                        <Route path="/favorites" element={<FavoritesPage />} />
+                                        <Route path="/profile" element={<ProfilePage />} />
+                                        <Route path="/settings" element={<SettingsPage />} />
+                                        <Route path="/orders" element={<OrdersPage />} />
+                                        <Route path="/orders/:id" element={<OrderDetailsPage />} />
+                                        <Route path="/notifications" element={<NotificationsPage />} />
+                                        <Route path="/shipping-addresses" element={<AddressPage />} />
+                                        <Route path="/payment-methods" element={<PaymentMethodsPage />} />
+                                    </Route>
 
-                                <Route path="/checkout" element={<CheckoutPage />} />
-                                <Route path="/login" element={<LoginPage />} />
-                                <Route path="/signup" element={<SignupPage />} />
-                                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-                                <Route path="/reset-password" element={<ResetPasswordPage />} />
+                                    <Route path="/checkout" element={<CheckoutPage />} />
+                                    <Route path="/login" element={<LoginPage />} />
+                                    <Route path="/signup" element={<SignupPage />} />
+                                    <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                                    <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-                                {/* Catch all */}
-                                <Route path="*" element={<Navigate to="/" replace />} />
-                            </Routes>
-                            <ToastContainer /> {/* Added */}
+                                    {/* Catch all */}
+                                    <Route path="*" element={<Navigate to="/" replace />} />
+                                </Routes>
+                                <ToastContainer /> {/* Added */}
+                            </CurrencyProvider> {/* Added */}
                         </ToastProvider> {/* Added */}
                     </FavoritesProvider>
                 </CartProvider>

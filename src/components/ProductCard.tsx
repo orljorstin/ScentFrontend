@@ -5,6 +5,7 @@ import { useCart } from '../contexts/CartContext';
 import { useFavorites } from '../contexts/FavoritesContext';
 import { useAuth } from '../contexts/AuthContext';
 import AuthRequiredModal from './AuthRequiredModal';
+import { useCurrency } from '../hooks/useCurrency';
 
 interface ProductCardProps {
     product: any;
@@ -15,6 +16,7 @@ export default function ProductCard({ product }: ProductCardProps) {
     const { addToCart } = useCart();
     const { isFavorite, toggleFavorite } = useFavorites();
     const { isAuthenticated } = useAuth();
+    const { formatPrice } = useCurrency(); // Added Hook
 
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [authAction, setAuthAction] = useState<'addToCart' | 'toggleFavorite'>('addToCart');
@@ -98,7 +100,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                     />
                 </div>
                 <div className="mt-auto w-full flex justify-between items-end">
-                    <div className="text-sm font-semibold text-gray-600">${(product.price_50ml || product.price || 0).toFixed(2)}</div>
+                    <div className="text-sm font-semibold text-gray-600">{formatPrice(product.price_50ml || product.price || 0)}</div>
                     <button onClick={handleAddToCart} className="bg-[#961E20] text-white p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
                         <Plus size={14} />
                     </button>

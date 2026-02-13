@@ -1,29 +1,24 @@
 import { useCallback } from 'react';
-
-export const CURRENCY_RATES = {
-    USD: 1,
-    PHP: 56,
-};
+import { useCurrencyContext } from '../contexts/CurrencyContext';
 
 export function useCurrency() {
-    // In a real app, this could be stateful or fetched
-    const currency = 'PHP';
-    const rate = CURRENCY_RATES.PHP;
+    const { currency, setCurrency, rate } = useCurrencyContext();
 
     const formatPrice = useCallback((amountInUsd: number) => {
         const converted = amountInUsd * rate;
 
-        return new Intl.NumberFormat('en-PH', {
+        return new Intl.NumberFormat(currency === 'PHP' ? 'en-PH' : 'en-US', {
             style: 'currency',
-            currency: 'PHP',
+            currency: currency,
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
         }).format(converted);
-    }, [rate]);
+    }, [currency, rate]);
 
     const toPhp = useCallback((amountInUsd: number) => {
+        // Keeps name toPhp for compatibility, but really converts to current currency value
         return amountInUsd * rate;
     }, [rate]);
 
-    return { formatPrice, currency, rate, toPhp };
+    return { formatPrice, currency, setCurrency, rate, toPhp };
 }

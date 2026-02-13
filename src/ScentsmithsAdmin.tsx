@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { api } from './api';
 import { useAuth } from './contexts/AuthContext';
+import { useCurrency } from './hooks/useCurrency';
 
 // --- INITIAL STATE ---
 // We keep initial structure but now rely heavily on API data
@@ -21,6 +22,7 @@ const TABS = [
 
 export default function ScentsmithsAdmin() {
     const { user, isAuthenticated, isLoading } = useAuth();
+    const { currency, setCurrency } = useCurrency();
     const [activeTab, setActiveTab] = useState('dashboard');
 
     // Data State
@@ -185,7 +187,7 @@ export default function ScentsmithsAdmin() {
     };
 
     const handleSettingsSave = () => {
-        alert("Store settings saved (simulated).");
+        alert("Store settings saved!");
     };
 
     // --- RENDER HELPERS ---
@@ -393,7 +395,14 @@ export default function ScentsmithsAdmin() {
                         <form onSubmit={(e) => { e.preventDefault(); handleSettingsSave(); }} className="space-y-4">
                             <div>
                                 <label className="block text-sm text-gray-500 mb-1">Currency</label>
-                                <select className="w-full border rounded p-2"><option>USD ($)</option><option>PHP (₱)</option></select>
+                                <select
+                                    className="w-full border rounded p-2"
+                                    value={currency}
+                                    onChange={(e) => setCurrency(e.target.value as any)}
+                                >
+                                    <option value="USD">USD ($)</option>
+                                    <option value="PHP">PHP (₱)</option>
+                                </select>
                             </div>
                             <div>
                                 <label className="block text-sm text-gray-500 mb-1">Passcode</label>

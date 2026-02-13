@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { ArrowLeft } from 'lucide-react';
 import BottomNav from '../components/layout/BottomNav';
@@ -26,8 +26,8 @@ export default function LoginPage() {
                 <button onClick={() => navigate('/')}><ArrowLeft className="text-[#1A1A1A]" /></button>
             </div>
             <div className="flex-1 flex flex-col p-8 justify-center">
-                <div className="w-16 h-16 bg-[#961E20] rounded-lg flex items-center justify-center mb-6 shadow-lg">
-                    <span className="font-serif text-3xl italic text-white">S</span>
+                <div className="flex justify-center mb-6">
+                    <img src="/logo.png" alt="Scentsmiths" className="w-24 h-auto" />
                 </div>
                 <h1 className="text-3xl font-bold text-[#1A1A1A] mb-2">Welcome Back</h1>
                 <p className="text-gray-500 mb-8">Sign in to access your orders and wishlist</p>
@@ -38,7 +38,10 @@ export default function LoginPage() {
                         <input name="email" type="email" className="w-full border-b border-gray-300 py-2 outline-none focus:border-[#961E20] bg-transparent" placeholder="name@example.com" />
                     </div>
                     <div className="mb-4">
-                        <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">Password</label>
+                        <div className="flex justify-between items-center">
+                            <label className="text-xs font-bold text-gray-700 uppercase tracking-wider">Password</label>
+                            <Link to="/forgot-password" className="text-xs text-[#961E20] hover:underline">Forgot?</Link>
+                        </div>
                         <input name="password" type="password" className="w-full border-b border-gray-300 py-2 outline-none focus:border-[#961E20] bg-transparent" placeholder="••••••••" />
                     </div>
                     <button type="submit" className="w-full bg-[#961E20] text-white py-4 rounded-xl font-bold shadow-lg mt-8">
