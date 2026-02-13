@@ -80,6 +80,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
         }
     }, [isAuthenticated, user?.id]);
 
+    // Clear cart on logout
+    const prevAuth = React.useRef(isAuthenticated);
+    useEffect(() => {
+        if (prevAuth.current && !isAuthenticated) {
+            setCart([]);
+            localStorage.removeItem(CART_STORAGE_KEY);
+        }
+        prevAuth.current = isAuthenticated;
+    }, [isAuthenticated]);
+
     const addToCart = useCallback((product: any, size: number) => {
         const price = size === 100
             ? (product.price_100ml || product.price || 0)
