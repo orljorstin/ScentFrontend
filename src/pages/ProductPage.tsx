@@ -23,24 +23,34 @@ export default function ProductPage() {
 
     useEffect(() => {
         // Fetch product details
-        // Ensure we handle the normalization here too!
         api.get(`/api/products/${id}`)
             .then(data => {
                 if (data) {
                     // Normalize single product
-                    const p = Array.isArray(data) ? data[0] : data; // API might return array or object
+                    const p = Array.isArray(data) ? data[0] : data;
+
+                    // Determine available sizes based on price/stock columns
+                    const has50 = p.price_50ml && Number(p.price_50ml) > 0;
+                    const has100 = p.price_100ml && Number(p.price_100ml) > 0;
+                    let sizes: number[] = [];
+                    if (has50) sizes.push(50);
+                    if (has100) sizes.push(100);
+                    if (sizes.length === 0) sizes.push(p.size_ml || 50);
+
                     const normalized = {
                         ...p,
-                        sizes: p.sizes || (p.size_ml ? [p.size_ml] : [50]),
+                        sizes: sizes,
                         notes: p.notes || {
                             top: p.notes_top || 'Various',
                             middle: p.notes_middle || 'Various',
                             base: p.notes_base || 'Various'
                         },
-                        price: Number(p.price || p.price_50ml || 0)
+                        // Ensure numeric prices
+                        price_50ml: Number(p.price_50ml || p.price || 0),
+                        price_100ml: Number(p.price_100ml || 0)
                     };
                     setProduct(normalized);
-                    setSelectedSize(normalized.sizes[0] || 50);
+                    setSelectedSize(sizes[0] || 50);
                 }
             })
             .catch(err => console.error("Failed to load product", err))
@@ -77,6 +87,11 @@ export default function ProductPage() {
     if (loading) return <div className="p-10 text-center">Loading...</div>;
     if (!product) return <div className="p-10 text-center">Product not found</div>;
 
+    // Calculate dynamic price
+    const currentPrice = selectedSize === 100
+        ? (product.price_100ml || product.price_50ml * 2)
+        : product.price_50ml;
+
     return (
         <div className="flex flex-col h-full bg-[#FDFBF4] min-h-screen">
             <div className="p-4 flex justify-between items-center sticky top-0 z-20">
@@ -101,7 +116,7 @@ export default function ProductPage() {
                     <h1 className="text-2xl font-bold text-[#1A1A1A] w-3/4">{product.name}</h1>
                     <div className="text-right">
                         <p className="text-xl font-bold text-[#961E20]">
-                            ${(selectedSize === 100 ? (product.price_100ml || product.price * 1.6) : (product.price_50ml || product.price)).toFixed(2)}
+                            ${currentPrice.toFixed(2)}
                         </p>
                     </div>
                 </div>
@@ -163,7 +178,7 @@ export default function ProductPage() {
                     className="flex-1 bg-[#961E20] text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-[#7a181a] active:scale-95 transition-all flex justify-center items-center gap-2"
                 >
                     <ShoppingBag size={18} className="text-white/80" />
-                    Add to Cart - ${(selectedSize === 100 ? (product.price_100ml || product.price * 1.6) : (product.price_50ml || product.price)).toFixed(2)}
+                    Add to Cart - ${currentPrice.toFixed(2)}
                 </button>
             </div>
 

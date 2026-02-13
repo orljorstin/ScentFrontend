@@ -31,8 +31,24 @@ export default function AddressPage() {
         }
     };
 
+    const validateForm = () => {
+        // Phone validation 09xxxxxxxxx (11 digits)
+        const phoneRegex = /^09\d{9}$/;
+        if (!phoneRegex.test(formData.phone)) {
+            alert("Please enter a valid PH phone number starting with 09 (11 digits).");
+            return false;
+        }
+        if (!formData.name || !formData.address || !formData.label) {
+            alert("Please fill in all required fields.");
+            return false;
+        }
+        return true;
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!validateForm()) return;
+
         try {
             await api.post('/api/addresses', formData);
             setShowForm(false);
@@ -61,7 +77,7 @@ export default function AddressPage() {
                         <form onSubmit={handleSubmit} className="space-y-3">
                             <input required placeholder="Label (e.g. Home, Work)" value={formData.label} onChange={e => setFormData({ ...formData, label: e.target.value })} className="w-full border-b border-gray-200 py-2 outline-none text-sm" />
                             <input required placeholder="Full Name" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full border-b border-gray-200 py-2 outline-none text-sm" />
-                            <input required placeholder="Phone Number" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="w-full border-b border-gray-200 py-2 outline-none text-sm" />
+                            <input required placeholder="Phone Number (e.g. 09123456789)" value={formData.phone} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="w-full border-b border-gray-200 py-2 outline-none text-sm" />
                             <input required placeholder="Address" value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} className="w-full border-b border-gray-200 py-2 outline-none text-sm" />
                             <label className="flex items-center gap-2 text-sm text-gray-600">
                                 <input type="checkbox" checked={formData.is_default} onChange={e => setFormData({ ...formData, is_default: e.target.checked })} />

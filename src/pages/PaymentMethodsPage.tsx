@@ -31,8 +31,31 @@ export default function PaymentMethodsPage() {
         }
     };
 
+    const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        let val = e.target.value.replace(/\D/g, ''); // Remove non-digits
+        if (val.length >= 3) {
+            val = val.substring(0, 2) + '/' + val.substring(2, 4);
+        }
+        setFormData({ ...formData, expiry: val });
+    };
+
+    const validateForm = () => {
+        if (formData.last4.length !== 4 || isNaN(Number(formData.last4))) {
+            alert("Please enter exactly 4 digits for Last 4.");
+            return false;
+        }
+        const expiryRegex = /^(0[1-9]|1[0-2])\/([0-9]{2})$/;
+        if (!expiryRegex.test(formData.expiry)) {
+            alert("Invalid expiry format. Use MM/YY.");
+            return false;
+        }
+        return true;
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!validateForm()) return;
+
         try {
             await api.post('/api/payment-methods', formData);
             setShowForm(false);
@@ -64,8 +87,8 @@ export default function PaymentMethodsPage() {
                                 <option value="MasterCard">MasterCard</option>
                                 <option value="Amex">Amex</option>
                             </select>
-                            <input required maxLength={4} placeholder="Last 4 Digits" value={formData.last4} onChange={e => setFormData({ ...formData, last4: e.target.value })} className="w-full border-b border-gray-200 py-2 outline-none text-sm" />
-                            <input required placeholder="Expiry (MM/YY)" value={formData.expiry} onChange={e => setFormData({ ...formData, expiry: e.target.value })} className="w-full border-b border-gray-200 py-2 outline-none text-sm" />
+                            <input required maxLength={4} placeholder="Last 4 Digits" value={formData.last4} onChange={e => setFormData({ ...formData, last4: e.target.value })} className="w-full border-b border-gray-200 py-2 outline-none text-sm text-gray-900 placeholder-gray-400" />
+                            <input required maxLength={5} placeholder="Expiry (MM/YY)" value={formData.expiry} onChange={handleExpiryChange} className="w-full border-b border-gray-200 py-2 outline-none text-sm text-gray-900 placeholder-gray-400" />
                             <label className="flex items-center gap-2 text-sm text-gray-600">
                                 <input type="checkbox" checked={formData.is_default} onChange={e => setFormData({ ...formData, is_default: e.target.checked })} />
                                 Set as default
