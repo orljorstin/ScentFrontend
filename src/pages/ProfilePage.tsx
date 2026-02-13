@@ -1,0 +1,98 @@
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { Settings, Package, MapPin, CreditCard, Bell, ChevronRight, Shield } from 'lucide-react';
+import BottomNav from '../components/layout/BottomNav';
+
+export default function ProfilePage() {
+    const navigate = useNavigate();
+    const { user, logout } = useAuth();
+
+    // If used without RequireAuth wrapper, handle null user
+    if (!user) {
+        // Redirect or show login
+        // Ideally this component isn't rendered if not auth
+        return <div className="p-10 text-center"><button onClick={() => navigate('/login')} className="text-[#961E20] font-bold">Please Log In</button></div>;
+    }
+
+    return (
+        <div className="flex flex-col h-full bg-[#FDFBF4] min-h-screen pb-20">
+            <div className="p-6 bg-[#961E20] text-white pt-10 pb-16 rounded-b-[2.5rem] shadow-xl relative z-10">
+                <div className="flex justify-between items-start mb-6">
+                    <h1 className="text-2xl font-bold">My Profile</h1>
+                    <button onClick={() => navigate('/settings')}><Settings size={20} /></button>
+                </div>
+                <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center text-2xl font-serif italic border-2 border-white/50">{user.name.charAt(0)}</div>
+                    <div>
+                        <p className="font-bold text-lg">{user.name}</p>
+                        <p className="text-white/70 text-sm">{user.email}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-4 -mt-8 pt-12">
+                <div className="bg-white rounded-2xl p-4 shadow-sm mb-4">
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="font-bold text-[#1A1A1A]">My Orders</h3>
+                        <button onClick={() => navigate('/orders')} className="text-[#961E20] text-xs font-bold">View All</button>
+                    </div>
+                    {/* Recent Order Preview - Mock or Fetch? */}
+                    {/* For now static placeholder or simplified fetch */}
+                    <div
+                        className="flex gap-4 items-center border-b border-gray-100 pb-3 cursor-pointer hover:bg-gray-50 rounded-lg transition-colors"
+                        onClick={() => navigate('/orders')}
+                    >
+                        <div className="bg-gray-100 p-2 rounded-lg"><Package size={20} className="text-gray-600" /></div>
+                        <div className="flex-1">
+                            <p className="text-sm font-bold text-[#1A1A1A]">View Order History</p>
+                            <p className="text-xs text-green-600 font-medium">Check status & details</p>
+                        </div>
+                        <ChevronRight size={16} className="text-gray-400" />
+                    </div>
+                </div>
+
+                <div className="bg-white rounded-2xl p-2 shadow-sm space-y-1">
+                    <button className="w-full flex items-center justify-between p-3 hover:bg-gray-50 rounded-xl transition-colors">
+                        <div className="flex items-center gap-3">
+                            <MapPin size={18} className="text-gray-500" />
+                            <span className="text-sm font-medium">Shipping Addresses</span>
+                        </div>
+                        <ChevronRight size={16} className="text-gray-400" />
+                    </button>
+                    <button className="w-full flex items-center justify-between p-3 hover:bg-gray-50 rounded-xl transition-colors">
+                        <div className="flex items-center gap-3">
+                            <CreditCard size={18} className="text-gray-500" />
+                            <span className="text-sm font-medium">Payment Methods</span>
+                        </div>
+                        <ChevronRight size={16} className="text-gray-400" />
+                    </button>
+                    <button onClick={() => navigate('/notifications')} className="w-full flex items-center justify-between p-3 hover:bg-gray-50 rounded-xl transition-colors">
+                        <div className="flex items-center gap-3">
+                            <Bell size={18} className="text-gray-500" />
+                            <span className="text-sm font-medium">Notifications</span>
+                        </div>
+                        <ChevronRight size={16} className="text-gray-400" />
+                    </button>
+                </div>
+
+                {user?.role === 'admin' && (
+                    <a
+                        href="/admin"
+                        className="w-full flex items-center justify-center gap-2 mt-4 bg-[#961E20] text-white py-3 rounded-xl font-bold text-sm hover:bg-[#7a181a] transition-colors"
+                    >
+                        <Shield size={16} /> Admin Dashboard
+                    </a>
+                )}
+
+                <button
+                    onClick={() => { logout(); navigate('/'); }}
+                    className="w-full text-center mt-4 text-gray-400 text-sm font-medium hover:text-[#961E20]"
+                >
+                    Log Out
+                </button>
+            </div>
+            <BottomNav />
+        </div>
+    );
+}
