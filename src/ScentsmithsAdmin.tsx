@@ -22,7 +22,7 @@ const TABS = [
 
 export default function ScentsmithsAdmin() {
     const { user, isAuthenticated, isLoading } = useAuth();
-    const { currency, setCurrency } = useCurrency();
+    const { currency, setCurrency, formatPrice } = useCurrency();
     const [activeTab, setActiveTab] = useState('dashboard');
 
     // Data State
@@ -278,10 +278,10 @@ export default function ScentsmithsAdmin() {
                 {activeTab === 'dashboard' && (
                     <div className="space-y-6">
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                            <StatCard title="Total Sales" value={`$${dashboardStats.totalSales}`} change="" />
+                            <StatCard title="Total Sales" value={formatPrice(parseFloat(dashboardStats.totalSales))} change="" />
                             <StatCard title="Total Orders" value={String(dashboardStats.totalOrders)} change="" />
                             <StatCard title="Customers" value={String(dashboardStats.totalCustomers)} change="" />
-                            <StatCard title="Avg. Order" value={`$${dashboardStats.avgOrder}`} change="" />
+                            <StatCard title="Avg. Order" value={formatPrice(parseFloat(dashboardStats.avgOrder))} change="" />
                         </div>
                     </div>
                 )}
@@ -345,7 +345,7 @@ export default function ScentsmithsAdmin() {
                                             <td className="px-6 py-4 text-[#961E20] font-medium truncate max-w-[100px]">{o.id}</td>
                                             <td className="px-6 py-4 font-bold">{o.users?.name || o.users?.email || 'Guest'}</td>
                                             <td className="px-6 py-4 text-gray-500">{new Date(o.created_at).toLocaleDateString()}</td>
-                                            <td className="px-6 py-4 font-bold">${Number(o.total).toFixed(2)}</td>
+                                            <td className="px-6 py-4 font-bold">{formatPrice(Number(o.total))}</td>
                                             <td className="px-6 py-4"><span className={`px-2 py-1 rounded text-xs font-bold ${o.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>{o.status}</span></td>
                                         </tr>
                                     ))}
@@ -469,9 +469,24 @@ export default function ScentsmithsAdmin() {
                             </div>
                         </div>
 
+                        <div className="mb-6">
+                            <p className="text-xs text-gray-500 uppercase font-bold mb-2">Order Status</p>
+                            <select
+                                value={viewingOrder.status}
+                                onChange={(e) => updateOrderStatus(viewingOrder.id, e.target.value)}
+                                className={`w-full p-2 rounded-lg font-bold border ${viewingOrder.status === 'Pending' ? 'bg-yellow-50 text-yellow-800 border-yellow-200' : 'bg-green-50 text-green-800 border-green-200'}`}
+                            >
+                                <option value="Pending">Pending</option>
+                                <option value="Paid">Paid</option>
+                                <option value="Shipped">Shipped</option>
+                                <option value="Delivered">Delivered</option>
+                                <option value="Cancelled">Cancelled</option>
+                            </select>
+                        </div>
+
                         <div className="flex justify-between border-t pt-4">
                             <span className="font-bold text-lg">Total</span>
-                            <span className="font-bold text-xl text-[#961E20]">${Number(viewingOrder.total).toFixed(2)}</span>
+                            <span className="font-bold text-xl text-[#961E20]">{formatPrice(Number(viewingOrder.total))}</span>
                         </div>
                     </div>
                 </div>
