@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Check, Truck, CreditCard } from 'lucide-react';
+import { ArrowLeft, Check, Truck, CreditCard, Plus } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../api';
@@ -12,25 +12,66 @@ export default function CheckoutPage() {
 
     const [step, setStep] = useState(1); // 1: Shipping, 2: Payment, 3: Success
     const [loading, setLoading] = useState(false);
+    const [addresses, setAddresses] = useState<any[]>([]);
+    const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
+
+    const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
+    const [selectedPaymentId, setSelectedPaymentId] = useState<any>(null); // 'cod' or ID
 
     const deliveryFee = 5.00;
     const total = cartTotal + deliveryFee;
 
+    useEffect(() => {
+        // Fetch addresses and payment methods
+        api.get('/api/addresses').then(data => {
+            setAddresses(data);
+            const defaultAddr = data.find((a: any) => a.is_default);
+            if (defaultAddr) setSelectedAddressId(defaultAddr.id);
+            else if (data.length > 0) setSelectedAddressId(data[0].id);
+        }).catch(console.error);
+
+        api.get('/api/payment-methods').then(data => {
+            setPaymentMethods(data);
+            const defaultPay = data.find((p: any) => p.is_default);
+            if (defaultPay) setSelectedPaymentId(defaultPay.id);
+            else setSelectedPaymentId('cod'); // Default to COD if no cards
+        }).catch(console.error);
+    }, []);
+
     const handlePlaceOrder = async () => {
+        if (!selectedAddressId) {
+            alert('Please select a shipping address.');
+            setStep(1);
+            return;
+        }
+
         setLoading(true);
-        // Simulate API call
-        setTimeout(async () => {
-            try {
-                // Ideally create order in DB via API
-                // For now, just clear cart and show success
-                await clearCart();
-                setStep(3);
-            } catch (e) {
-                alert("Failed to place order");
-            } finally {
-                setLoading(false);
+        try {
+            const addressObj = addresses.find(a => a.id === selectedAddressId);
+            const addressStr = `${addressObj.name}, ${addressObj.address}`;
+
+            let paymentStr = 'Cash on Delivery';
+            if (selectedPaymentId !== 'cod') {
+                const method = paymentMethods.find(m => m.id === selectedPaymentId);
+                paymentStr = `${method.type} ending in ${method.last4}`;
             }
-        }, 1500);
+
+            const payload = {
+                items: cart,
+                total,
+                address: addressStr,
+                payment_method: paymentStr
+            };
+
+            const order = await api.post('/api/orders', payload);
+            await clearCart();
+            // Go to success
+            setStep(3);
+        } catch (e: any) {
+            alert(e.message || "Failed to place order");
+        } finally {
+            setLoading(false);
+        }
     };
 
     if (cart.length === 0 && step !== 3) {
@@ -78,15 +119,28 @@ export default function CheckoutPage() {
                 {step === 1 && (
                     <div className="space-y-6">
                         <div className="bg-white p-4 rounded-xl shadow-sm">
-                            <h3 className="font-bold mb-4 flex items-center gap-2"><Truck size={18} /> Shipping Address</h3>
-                            <div className="space-y-3">
-                                <input type="text" placeholder="Full Name" defaultValue={user?.name} className="w-full border-b border-gray-200 py-2 outline-none" />
-                                <input type="text" placeholder="Address" className="w-full border-b border-gray-200 py-2 outline-none" />
-                                <input type="text" placeholder="City, State, ZIP" className="w-full border-b border-gray-200 py-2 outline-none" />
-                                <input type="tel" placeholder="Phone Number" className="w-full border-b border-gray-200 py-2 outline-none" />
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="font-bold flex items-center gap-2"><Truck size={18} /> Shipping Address</h3>
+                                <button onClick={() => navigate('/shipping-addresses')} className="text-[#961E20] text-xs font-bold flex items-center gap-1"><Plus size={12} /> Add New</button>
                             </div>
+                            {addresses.length === 0 ? (
+                                <p className="text-sm text-gray-500 text-center py-4">No addresses found. Please add one.</p>
+                            ) : (
+                                <div className="space-y-3">
+                                    {addresses.map(addr => (
+                                        <label key={addr.id} className={`flex items-start gap-3 p-3 border rounded-lg cursor-pointer transition-all ${selectedAddressId === addr.id ? 'border-[#961E20] bg-red-50' : 'border-gray-200'}`}>
+                                            <input type="radio" name="address" checked={selectedAddressId === addr.id} onChange={() => setSelectedAddressId(addr.id)} className="mt-1" />
+                                            <div>
+                                                <p className="font-bold text-sm">{addr.label}</p>
+                                                <p className="text-sm text-gray-600">{addr.address}</p>
+                                                <p className="text-xs text-gray-400">{addr.name} • {addr.phone}</p>
+                                            </div>
+                                        </label>
+                                    ))}
+                                </div>
+                            )}
                         </div>
-                        <button onClick={() => setStep(2)} className="w-full bg-[#1A1A1A] text-white py-4 rounded-xl font-bold shadow-lg">
+                        <button onClick={() => { if (addresses.length === 0) return alert('Add an address first'); setStep(2); }} className="w-full bg-[#1A1A1A] text-white py-4 rounded-xl font-bold shadow-lg">
                             Continue to Payment
                         </button>
                     </div>
@@ -95,20 +149,24 @@ export default function CheckoutPage() {
                 {step === 2 && (
                     <div className="space-y-6">
                         <div className="bg-white p-4 rounded-xl shadow-sm">
-                            <h3 className="font-bold mb-4 flex items-center gap-2"><CreditCard size={18} /> Payment Method</h3>
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="font-bold flex items-center gap-2"><CreditCard size={18} /> Payment Method</h3>
+                                <button onClick={() => navigate('/payment-methods')} className="text-[#961E20] text-xs font-bold flex items-center gap-1"><Plus size={12} /> Add New</button>
+                            </div>
                             <div className="space-y-3">
-                                <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:border-[#961E20]">
-                                    <input type="radio" name="payment" defaultChecked />
-                                    <span>Credit Card</span>
+                                <label className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-all ${selectedPaymentId === 'cod' ? 'border-[#961E20] bg-red-50' : 'border-gray-200'}`}>
+                                    <input type="radio" name="payment" checked={selectedPaymentId === 'cod'} onChange={() => setSelectedPaymentId('cod')} />
+                                    <span className="font-medium">Cash on Delivery</span>
                                 </label>
-                                <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:border-[#961E20]">
-                                    <input type="radio" name="payment" />
-                                    <span>PayPal</span>
-                                </label>
-                                <label className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:border-[#961E20]">
-                                    <input type="radio" name="payment" />
-                                    <span>Cash on Delivery</span>
-                                </label>
+                                {paymentMethods.map(method => (
+                                    <label key={method.id} className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition-all ${selectedPaymentId === method.id ? 'border-[#961E20] bg-red-50' : 'border-gray-200'}`}>
+                                        <input type="radio" name="payment" checked={selectedPaymentId === method.id} onChange={() => setSelectedPaymentId(method.id)} />
+                                        <div>
+                                            <span className="font-medium">{method.type}</span>
+                                            <span className="text-gray-500 ml-2">**** {method.last4}</span>
+                                        </div>
+                                    </label>
+                                ))}
                             </div>
                         </div>
 
@@ -116,7 +174,7 @@ export default function CheckoutPage() {
                             <h3 className="font-bold mb-4">Order Summary</h3>
                             {cart.map(item => (
                                 <div key={`${item.id}-${item.size}`} className="flex justify-between text-sm mb-2">
-                                    <span>{item.qty}x {item.name} ({item.size}ml)</span>
+                                    <span className="flex-1 truncate pr-4">{item.qty}x {item.name} ({item.size}ml)</span>
                                     <span>${(item.price * item.qty).toFixed(2)}</span>
                                 </div>
                             ))}
