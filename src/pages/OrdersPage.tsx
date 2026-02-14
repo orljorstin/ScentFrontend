@@ -40,7 +40,7 @@ export default function OrdersPage() {
                             <div className="flex items-center gap-4">
                                 <div className="bg-orange-50 p-3 rounded-lg"><Package className="text-orange-600" size={20} /></div>
                                 <div>
-                                    <h3 className="font-bold text-[#1A1A1A] text-sm">Order #{order.id}</h3>
+                                    <h3 className="font-bold text-[#1A1A1A] text-sm">Order #{formatOrderId(order.id)}</h3>
                                     <p className="text-xs text-gray-400">{new Date(order.created_at).toLocaleDateString()}</p>
                                     <span className={`inline-block px-2 py-0.5 text-[10px] uppercase font-bold rounded mt-1 
                                         ${order.status === 'Delivered' ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700'}`}>
