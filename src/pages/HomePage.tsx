@@ -111,6 +111,18 @@ export default function HomePage({ perfumes, isLoading }: HomePageProps) {
                                 ))}
                             </div>
                         </section>
+
+                        {/* All Fragrances Section (New) */}
+                        <section>
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-xl font-bold text-[#1A1A1A]">All Fragrances</h2>
+                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                {perfumes.map(product => (
+                                    <ProductCard key={product.id} product={product} />
+                                ))}
+                            </div>
+                        </section>
                     </>
                 ) : (
                     // Filtered Results

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
     LayoutDashboard, Package, ShoppingCart, Users, Settings,
@@ -7,9 +8,9 @@ import {
 import { api } from './api';
 import { useAuth } from './contexts/AuthContext';
 import { useCurrency } from './hooks/useCurrency';
+import { formatOrderId } from './utils/orderId';
 
-// --- INITIAL STATE ---
-// We keep initial structure but now rely heavily on API data
+// ... (imports remain)
 
 const TABS = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -29,7 +30,7 @@ export default function ScentsmithsAdmin() {
     const [products, setProducts] = useState<any[]>([]);
     const [orders, setOrders] = useState<any[]>([]);
     const [customers, setCustomers] = useState<any[]>([]);
-    const [dashboardStats, setDashboardStats] = useState({ totalSales: '0', totalOrders: 0, totalCustomers: 0, avgOrder: '0' });
+    const [dashboardStats, setDashboardStats] = useState({ totalSales: '0', totalOrders: 0, totalCustomers: 0, avgOrder: '0', latest_order_date: null });
     const [adminNotifications, setAdminNotifications] = useState<any[]>([]);
 
     // UI State
@@ -43,8 +44,7 @@ export default function ScentsmithsAdmin() {
     const [editingCustomer, setEditingCustomer] = useState<any>(null); // Editing profile
 
     // --- REAL-TIME POLLING ---
-    // --- REAL-TIME POLLING ---
-    const lastOrderCountRef = React.useRef(0);
+    const lastOrderDateRef = React.useRef<string | null>(null);
 
     useEffect(() => {
         if (!isAuthenticated || user?.role !== 'admin') return;
@@ -65,7 +65,8 @@ export default function ScentsmithsAdmin() {
                 setOrders(ordersData);
                 setCustomers(customersData);
                 setDashboardStats(statsData);
-                lastOrderCountRef.current = Number(statsData.totalOrders);
+                // Initialize ref with current latest date
+                lastOrderDateRef.current = statsData.latest_order_date;
             } catch (e) { console.error("Admin data fetch failed", e); }
         };
 
@@ -75,13 +76,13 @@ export default function ScentsmithsAdmin() {
         intervalId = setInterval(async () => {
             try {
                 const stats = await api.get('/api/admin/stats');
-                const currentCount = Number(stats.totalOrders);
-                const prevCount = lastOrderCountRef.current;
+                const latestDate = stats.latest_order_date;
+                const prevDate = lastOrderDateRef.current;
 
-                // If new orders arrived
-                if (currentCount > prevCount) {
-                    const diff = currentCount - prevCount;
-                    lastOrderCountRef.current = currentCount;
+                // If new order arrived (timestamp differs and is newer)
+                // We use simple string comparison for ISO dates or just inequality if one is null
+                if (latestDate && latestDate !== prevDate) {
+                    lastOrderDateRef.current = latestDate;
 
                     // 1. Play Sound
                     const audio = new Audio('/notification.mp3');
@@ -98,7 +99,7 @@ export default function ScentsmithsAdmin() {
                     setAdminNotifications(prev => [{
                         id: Date.now(),
                         title: 'New Order Received',
-                        message: `${diff} new order(s) placed just now.`,
+                        message: `New order placed just now.`,
                         type: 'order',
                         created_at: new Date().toISOString(),
                         is_read: false
@@ -345,7 +346,7 @@ export default function ScentsmithsAdmin() {
                                 <tbody className="divide-y divide-gray-100">
                                     {orders.map(o => (
                                         <tr key={o.id} onClick={() => setViewingOrder(o)} className="hover:bg-gray-50 cursor-pointer">
-                                            <td className="px-6 py-4 text-[#961E20] font-medium truncate max-w-[100px]">{o.id}</td>
+                                            <td className="px-6 py-4 text-[#961E20] font-medium truncate max-w-[100px]">{formatOrderId(o.id)}</td>
                                             <td className="px-6 py-4 font-bold">{o.users?.name || o.users?.email || 'Guest'}</td>
                                             <td className="px-6 py-4 text-gray-500">{new Date(o.created_at).toLocaleDateString()}</td>
                                             <td className="px-6 py-4 font-bold">{formatPrice(Number(o.total))}</td>

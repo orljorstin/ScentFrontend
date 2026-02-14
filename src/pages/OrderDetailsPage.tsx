@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Package, MapPin, CreditCard } from 'lucide-react';
 import { api } from '../api';
+import { formatOrderId } from '../utils/orderId';
 
 export default function OrderDetailsPage() {
     const { id } = useParams();
@@ -38,7 +39,7 @@ export default function OrderDetailsPage() {
                         <Package size={32} />
                     </div>
                     <h2 className="text-xl font-bold text-[#1A1A1A] mb-1">{order.status}</h2>
-                    <p className="text-gray-500 text-sm">Order #{order.id}</p>
+                    <p className="text-gray-500 text-sm">Order #{formatOrderId(order.id)}</p>
                     <p className="text-gray-400 text-xs mt-1">{new Date(order.created_at).toLocaleString()}</p>
                 </div>
 

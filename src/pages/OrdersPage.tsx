@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Package, ChevronRight } from 'lucide-react';
 import BottomNav from '../components/layout/BottomNav';
 import { api } from '../api';
+import { formatOrderId } from '../utils/orderId';
 
 export default function OrdersPage() {
     const navigate = useNavigate();
