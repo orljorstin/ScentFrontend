@@ -43,6 +43,28 @@ export default function ScentsmithsAdmin() {
     const [viewingCustomer, setViewingCustomer] = useState<any>(null); // Viewing profile
     const [editingCustomer, setEditingCustomer] = useState<any>(null); // Editing profile
 
+    // --- HELPERS ---
+    const getStatusColor = (status: string) => {
+        switch (status) {
+            case 'Pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+            case 'Paid': return 'bg-indigo-100 text-indigo-800 border-indigo-200';
+            case 'Shipped': return 'bg-blue-100 text-blue-800 border-blue-200';
+            case 'Delivered': return 'bg-green-100 text-green-800 border-green-200';
+            case 'Cancelled': return 'bg-red-100 text-red-800 border-red-200';
+            default: return 'bg-gray-100 text-gray-800 border-gray-200';
+        }
+    };
+
+    const handleNotificationClick = (n: any) => {
+        if (n.type === 'order' && n.targetId) {
+            const targetOrder = orders.find(o => o.id === n.targetId);
+            if (targetOrder) {
+                setViewingOrder(targetOrder);
+                setShowNotifications(false);
+            }
+        }
+    };
+
     // --- REAL-TIME POLLING ---
     const lastOrderDateRef = React.useRef<string | null>(null);
 
@@ -94,13 +116,15 @@ export default function ScentsmithsAdmin() {
                     // Refresh orders list silently
                     const newOrders = await api.get('/api/admin/orders');
                     setOrders(newOrders);
+                    const latestOrder = newOrders[0];
 
                     // Add to notifications
                     setAdminNotifications(prev => [{
                         id: Date.now(),
                         title: 'New Order Received',
-                        message: `New order placed just now.`,
+                        message: `Order #${formatOrderId(latestOrder?.id)} placed just now.`,
                         type: 'order',
+                        targetId: latestOrder?.id,
                         created_at: new Date().toISOString(),
                         is_read: false
                     }, ...prev]);
@@ -245,7 +269,11 @@ export default function ScentsmithsAdmin() {
                                         <div className="p-4 text-center text-xs text-gray-400">No notifications</div>
                                     ) : (
                                         adminNotifications.map(n => (
-                                            <div key={n.id} className={`p-3 border-b border-gray-50 hover:bg-gray-50 ${n.is_read ? 'opacity-60' : 'bg-red-50/30'}`}>
+                                            <div
+                                                key={n.id}
+                                                onClick={() => handleNotificationClick(n)}
+                                                className={`p-3 border-b border-gray-50 hover:bg-gray-50 cursor-pointer ${n.is_read ? 'opacity-60' : 'bg-red-50/30'}`}
+                                            >
                                                 <div className="flex justify-between items-start mb-1">
                                                     <span className={`text-xs font-bold uppercase px-1.5 py-0.5 rounded ${n.type === 'stock' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>{n.type}</span>
                                                     <span className="text-[10px] text-gray-400">{new Date(n.created_at).toLocaleDateString()}</span>
@@ -350,7 +378,7 @@ export default function ScentsmithsAdmin() {
                                             <td className="px-6 py-4 font-bold">{o.users?.name || o.users?.email || 'Guest'}</td>
                                             <td className="px-6 py-4 text-gray-500">{new Date(o.created_at).toLocaleDateString()}</td>
                                             <td className="px-6 py-4 font-bold">{formatPrice(Number(o.total))}</td>
-                                            <td className="px-6 py-4"><span className={`px-2 py-1 rounded text-xs font-bold ${o.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>{o.status}</span></td>
+                                            <td className="px-6 py-4"><span className={`px-2 py-1 rounded text-xs font-bold border ${getStatusColor(o.status)}`}>{o.status}</span></td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -389,6 +417,30 @@ export default function ScentsmithsAdmin() {
                                     ))}
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'notifications' && (
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+                        <div className="p-4 border-b border-gray-100"><h3 className="font-bold">System Alerts</h3></div>
+                        <div className="divide-y divide-gray-100">
+                            {adminNotifications.length === 0 ? (
+                                <div className="p-8 text-center text-gray-500">No alerts to show.</div>
+                            ) : (
+                                adminNotifications.map(n => (
+                                    <div key={n.id} onClick={() => handleNotificationClick(n)} className="p-4 hover:bg-gray-50 cursor-pointer flex gap-4 items-start">
+                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${n.type === 'order' ? 'bg-blue-100 text-blue-600' : 'bg-red-100 text-red-600'}`}>
+                                            <Bell size={20} />
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-[#1A1A1A]">{n.title}</p>
+                                            <p className="text-sm text-gray-600 mb-1">{n.message}</p>
+                                            <p className="text-xs text-gray-400">{new Date(n.created_at).toLocaleString()}</p>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
                         </div>
                     </div>
                 )}
@@ -478,7 +530,7 @@ export default function ScentsmithsAdmin() {
                             <select
                                 value={viewingOrder.status}
                                 onChange={(e) => updateOrderStatus(viewingOrder.id, e.target.value)}
-                                className={`w-full p-2 rounded-lg font-bold border ${viewingOrder.status === 'Pending' ? 'bg-yellow-50 text-yellow-800 border-yellow-200' : 'bg-green-50 text-green-800 border-green-200'}`}
+                                className={`w-full p-2 rounded-lg font-bold border ${getStatusColor(viewingOrder.status)}`}
                             >
                                 <option value="Pending">Pending</option>
                                 <option value="Paid">Paid</option>
