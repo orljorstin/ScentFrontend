@@ -24,7 +24,7 @@ export default function CollectionPage({ perfumes }: CollectionPageProps) {
     }, [id, perfumes]);
 
     return (
-        <div className="p-4">
+        <div className="p-4 pb-32">
             <div className="flex items-center gap-4 mb-6">
                 <button onClick={() => navigate(-1)} className="text-gray-600 hover:text-[#961E20]">
                     <ArrowLeft size={24} />

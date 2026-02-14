@@ -13,6 +13,7 @@ import ToastContainer from './components/ToastContainer'; // Added
 import OnboardingPage from './pages/OnboardingPage';
 import HomePage from './pages/HomePage';
 import ProductPage from './pages/ProductPage';
+import InstallPrompt from './components/InstallPrompt'; // Added
 import CartPage from './pages/CartPage';
 import FavoritesPage from './pages/FavoritesPage';
 import ProfilePage from './pages/ProfilePage';
@@ -112,6 +113,7 @@ export default function App() {
                                     <Route path="*" element={<Navigate to="/" replace />} />
                                 </Routes>
                                 <ToastContainer />
+                                <InstallPrompt />
                             </CurrencyProvider>
                         </ToastProvider>
                     </FavoritesProvider>

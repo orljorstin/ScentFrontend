@@ -43,11 +43,13 @@ export default function ScentsmithsAdmin() {
     const [editingCustomer, setEditingCustomer] = useState<any>(null); // Editing profile
 
     // --- REAL-TIME POLLING ---
+    // --- REAL-TIME POLLING ---
+    const lastOrderCountRef = React.useRef(0);
+
     useEffect(() => {
         if (!isAuthenticated || user?.role !== 'admin') return;
 
         let intervalId: any;
-        let previousTotalOrders = 0;
 
         // Initial fetch
         const fetchData = async () => {
@@ -63,28 +65,29 @@ export default function ScentsmithsAdmin() {
                 setOrders(ordersData);
                 setCustomers(customersData);
                 setDashboardStats(statsData);
-                previousTotalOrders = statsData.totalOrders;
+                lastOrderCountRef.current = Number(statsData.totalOrders);
             } catch (e) { console.error("Admin data fetch failed", e); }
         };
 
         fetchData();
 
-        // Poll every 30 seconds
+        // Poll every 15 seconds
         intervalId = setInterval(async () => {
             try {
                 const stats = await api.get('/api/admin/stats');
+                const currentCount = Number(stats.totalOrders);
+                const prevCount = lastOrderCountRef.current;
 
                 // If new orders arrived
-                if (stats.totalOrders > previousTotalOrders) {
-                    const diff = stats.totalOrders - previousTotalOrders;
-                    previousTotalOrders = stats.totalOrders;
+                if (currentCount > prevCount) {
+                    const diff = currentCount - prevCount;
+                    lastOrderCountRef.current = currentCount;
 
                     // 1. Play Sound
-                    const audio = new Audio('/notification.mp3'); // Ensure this file exists in /public or use base64
-                    audio.play().catch(e => console.warn("Audio play failed (user interaction needed first)", e));
+                    const audio = new Audio('/notification.mp3');
+                    audio.play().catch(e => console.warn("Audio play blocked", e));
 
-                    // 2. Show Toast (using simple alert for now if ToastContext isn't available here, but we should import it)
-                    // Since we are inside ScentsmithsAdmin, let's assume we can use a local state or just refresh data
+                    // 2. Update Stats
                     setDashboardStats(stats);
 
                     // Refresh orders list silently
@@ -105,7 +108,7 @@ export default function ScentsmithsAdmin() {
                     setShowNotifications(true);
                 }
             } catch (e) { console.warn("Polling failed", e); }
-        }, 30000);
+        }, 15000);
 
         return () => clearInterval(intervalId);
     }, [isAuthenticated, user]);

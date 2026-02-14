@@ -22,18 +22,38 @@ export default function PaymentMethodsPage() {
 
     const fetchMethods = () => {
         api.get('/api/payment-methods')
-            .then(setMethods)
+            .then(data => {
+                setMethods(Array.isArray(data) ? data : []);
+            })
             .catch(err => console.error(err))
             .finally(() => setLoading(false));
     };
 
-    const handleDelete = async (id: number) => {
+    const handleDelete = async (id: any) => {
         if (!window.confirm('Delete this card?')) return;
         try {
             await api.delete(`/api/payment-methods/${id}`);
-            setMethods(methods.filter(m => m.id !== id));
+            setMethods(prev => prev.filter(m => m.id !== id));
         } catch (err) {
+            console.error(err);
             alert('Failed to delete payment method');
+        }
+    };
+
+    const handleSetDefault = async (id: any) => {
+        try {
+            // Optimistic update
+            const newMethods = methods.map(m => ({
+                ...m,
+                is_default: m.id === id
+            }));
+            setMethods(newMethods);
+
+            await api.patch(`/api/payment-methods/${id}/default`, { is_default: true });
+        } catch (err) {
+            console.error(err);
+            alert('Failed to set default payment method');
+            fetchMethods(); // Revert
         }
     };
 
@@ -123,7 +143,8 @@ export default function PaymentMethodsPage() {
         };
 
         try {
-            await api.post('/api/payment-methods', payload);
+            const newMethod = await api.post('/api/payment-methods', payload);
+            setMethods(prev => [...prev, newMethod]);
             setShowForm(false);
             // Reset
             setCardNumber('');
@@ -211,16 +232,24 @@ export default function PaymentMethodsPage() {
                     </div>
                 ) : (
                     methods.map(method => (
-                        <div key={method.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center">
-                            <div>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-xs bg-gray-100 px-2 py-0.5 rounded font-bold uppercase">{method.type}</span>
+                        <div key={method.id} className={`bg-white p-4 rounded-xl shadow-sm border ${method.is_default ? 'border-[#961E20] bg-orange-50/10' : 'border-gray-100'} flex justify-between items-center`}>
+                            <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <span className="text-xs bg-gray-100 px-2 py-0.5 rounded font-bold uppercase text-gray-600">{method.type}</span>
                                     {method.is_default && <span className="text-[10px] text-[#961E20] font-bold border border-[#961E20] px-1 rounded">DEFAULT</span>}
                                 </div>
-                                <p className="font-bold mt-1 text-[#1A1A1A]">**** **** **** {method.last4}</p>
-                                <p className="text-xs text-gray-400">Expires {method.expiry}</p>
+                                <p className="font-bold text-[#1A1A1A]">**** **** **** {method.last4}</p>
+                                <p className="text-xs text-gray-400 mb-2">Expires {method.expiry}</p>
+
+                                {!method.is_default && (
+                                    <button onClick={() => handleSetDefault(method.id)} className="text-xs font-bold text-gray-500 hover:text-[#961E20]">
+                                        Set as Default
+                                    </button>
+                                )}
                             </div>
-                            <button onClick={() => handleDelete(method.id)} className="text-gray-400 hover:text-red-600"><Trash2 size={16} /></button>
+                            <button onClick={() => handleDelete(method.id)} className="text-gray-300 hover:text-red-600 p-2">
+                                <Trash2 size={18} />
+                            </button>
                         </div>
                     ))
                 )}
