@@ -333,7 +333,7 @@ export default function CheckoutPage() {
                                 </div>
                             )}
                         </div>
-                        <button onClick={() => { if (!selectedAddressId) return addToast('Please select an address', 'error'); setStep(2); }} className="w-full bg-[#1A1A1A] text-white py-4 rounded-xl font-bold shadow-lg">
+                        <button onClick={() => { if (!selectedAddressId) return addToast('Please select an address', 'error'); setStep(2); }} className="w-full bg-[#961E20] text-white py-4 rounded-xl font-bold shadow-lg mt-8 hover:bg-[#7a181a] transition-colors">
                             Continue to Payment
                         </button>
                     </div>
