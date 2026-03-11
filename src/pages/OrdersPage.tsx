@@ -4,9 +4,11 @@ import { ArrowLeft, Package, ChevronRight } from 'lucide-react';
 import BottomNav from '../components/layout/BottomNav';
 import { api } from '../api';
 import { formatOrderId } from '../utils/orderId';
+import { useCurrency } from '../hooks/useCurrency';
 
 export default function OrdersPage() {
     const navigate = useNavigate();
+    const { formatPrice } = useCurrency();
     const [orders, setOrders] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -49,7 +51,7 @@ export default function OrdersPage() {
                                 </div>
                             </div>
                             <div className="text-right">
-                                <p className="font-bold text-[#1A1A1A] text-sm">${Number(order.total).toFixed(2)}</p>
+                                <p className="font-bold text-[#1A1A1A] text-sm">{formatPrice(Number(order.total))}</p>
                                 <ChevronRight size={16} className="text-gray-400 ml-auto mt-1" />
                             </div>
                         </div>

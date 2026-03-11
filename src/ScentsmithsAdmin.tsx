@@ -344,7 +344,7 @@ export default function ScentsmithsAdmin() {
                                                 <span className={p.stock_50ml < 10 ? 'text-red-500' : 'text-green-600'}>{p.stock_50ml}</span> /
                                                 <span className={p.stock_100ml < 10 ? 'text-red-500' : 'text-green-600'}> {p.stock_100ml}</span>
                                             </td>
-                                            <td className="px-6 py-4">${p.price_50ml} / ${p.price_100ml}</td>
+                                            <td className="px-6 py-4">{formatPrice(p.price_50ml)} / {formatPrice(p.price_100ml)}</td>
                                             <td className="px-6 py-4 text-right flex justify-end gap-2">
                                                 <button onClick={() => setEditingProduct(p)} className="p-1.5 hover:bg-gray-100 rounded text-gray-500"><Edit2 size={16} /></button>
                                                 <button onClick={() => deleteProduct(p.id)} className="p-1.5 hover:bg-gray-100 rounded text-red-500"><Trash2 size={16} /></button>
@@ -406,7 +406,7 @@ export default function ScentsmithsAdmin() {
                                         <tr key={c.id} className="hover:bg-gray-50">
                                             <td className="px-6 py-4 font-bold">{c.name}</td>
                                             <td className="px-6 py-4 text-gray-500">{c.email}</td>
-                                            <td className="px-6 py-4 font-bold text-[#961E20]">{c.spent}</td>
+                                            <td className="px-6 py-4 font-bold text-[#961E20]">{formatPrice(Number(c.spent))}</td>
                                             <td className="px-6 py-4">
                                                 <button onClick={() => toggleUserRole(c.id, c.role)} className={`px-2 py-1 rounded text-xs font-bold ${c.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'}`}>{c.role}</button>
                                             </td>
@@ -517,7 +517,7 @@ export default function ScentsmithsAdmin() {
                                             <p className="text-xs text-gray-500">{item.size_ml}ml</p>
                                         </div>
                                         <div className="text-right">
-                                            <p className="font-bold">${item.price}</p>
+                                            <p className="font-bold">{formatPrice(Number(item.price))}</p>
                                             <p className="text-xs text-gray-500">Qty: {item.qty}</p>
                                         </div>
                                     </div>

@@ -11,7 +11,7 @@ export default function CartPage() {
     const { formatPrice } = useCurrency();
 
     // Future: dynamic delivery fee based on address
-    const deliveryFee = 5.00;
+    const deliveryFee = 100 / 56;
     const grandTotal = cartTotal + deliveryFee;
 
     return (

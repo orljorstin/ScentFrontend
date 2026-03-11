@@ -3,10 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Package, MapPin, CreditCard } from 'lucide-react';
 import { api } from '../api';
 import { formatOrderId } from '../utils/orderId';
+import { useCurrency } from '../hooks/useCurrency';
 
 export default function OrderDetailsPage() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { formatPrice } = useCurrency();
     const [order, setOrder] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
@@ -58,22 +60,22 @@ export default function OrderDetailsPage() {
                                         <p className="text-xs text-gray-500">{item.size_ml}ml</p>
                                     </div>
                                 </div>
-                                <p className="font-medium">${Number(item.price).toFixed(2)}</p>
+                                <p className="font-medium">{formatPrice(Number(item.price))}</p>
                             </div>
                         ))}
                     </div>
                     <div className="border-t border-gray-100 mt-4 pt-4 space-y-2">
                         <div className="flex justify-between text-sm text-gray-500">
                             <span>Subtotal</span>
-                            <span>${subtotal.toFixed(2)}</span>
+                            <span>{formatPrice(subtotal)}</span>
                         </div>
                         <div className="flex justify-between text-sm text-gray-500">
                             <span>Shipping</span>
-                            <span>${shipping.toFixed(2)}</span>
+                            <span>{formatPrice(shipping)}</span>
                         </div>
                         <div className="flex justify-between font-bold text-lg text-[#1A1A1A] pt-2">
                             <span>Total</span>
-                            <span className="text-[#961E20]">${Number(order.total).toFixed(2)}</span>
+                            <span className="text-[#961E20]">{formatPrice(Number(order.total))}</span>
                         </div>
                     </div>
                 </div>

@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Bell } from 'lucide-react';
 import { api } from '../api';
+import { useCurrency } from '../hooks/useCurrency';
 
 export default function NotificationsPage() {
     const navigate = useNavigate();
+    const { formatPrice } = useCurrency();
     const [notifications, setNotifications] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -43,7 +45,9 @@ export default function NotificationsPage() {
                                 </div>
                                 <div>
                                     <h4 className="font-bold text-sm text-[#1A1A1A]">{n.title}</h4>
-                                    <p className="text-xs text-gray-500 mt-1">{n.message}</p>
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        {n.message.replace(/\$(\d+(\.\d+)?)/g, (match: string, p1: string) => formatPrice(Number(p1)))}
+                                    </p>
                                     <p className="text-[10px] text-gray-400 mt-2">{new Date(n.created_at).toLocaleString()}</p>
                                 </div>
                             </div>
